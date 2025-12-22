@@ -24,10 +24,6 @@ public class TimerUtilsImpl {
     //deactivate-command
     private static final String[] COMMAND_DEACTIVATION = { "sudo /usr/bin/systemctl stop ", " && sudo /usr/bin/systemctl disable "};
 
-    //tmp directory
-    private static final String TMP_DIR = "java.io.tmpdir";
-
-
     //Errors
     private static final String ERROR_IO_TIMER_WRITE = "ERROR: Failed to create or move timer file";
     private static final String ERROR_SYSTEMCTL = "ERROR: Systemctl sequence failed.";
@@ -45,8 +41,8 @@ public class TimerUtilsImpl {
      * @param serviceFileName nome del service da far partire con il timer, compreso di estensione .service
      * @code tempDIr directory temporanea del sistema operativo
      * **/
-    public TimerUtilsImpl(@Value("${systemd.directory}" )String systemdTimerDir, @Value("${systemd.service.name}") String serviceFileName){
-            tempDir = Paths.get(System.getProperty(TMP_DIR));
+    public TimerUtilsImpl(@Value("${tmp.directory}" )String tmpDir,@Value("${systemd.directory}" )String systemdTimerDir, @Value("${systemd.service.name}") String serviceFileName){
+            tempDir = Paths.get(tmpDir);
             targetDir = Paths.get(systemdTimerDir);
             this.serviceFileName = serviceFileName;
     }

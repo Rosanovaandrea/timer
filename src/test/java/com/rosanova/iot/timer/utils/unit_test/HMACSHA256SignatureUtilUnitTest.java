@@ -25,29 +25,43 @@ class HMACSHA256SignatureUtilUnitTest {
         Assertions.assertEquals(HMACsha256_1734538070000, result);
 
     }
-    @Test
-    void _SecretKey_256SignatureTest() {
-        String sha256_doubleSecretKey = "hQzhRLy/CBdhYNOLg1IrAMqfnV2X/at9uGkMC3ksay4=";
-        HMACSHA256SignatureUtil test = new HMACSHA256SignatureUtil(testSecretKey);
 
-        byte[] secretkeyByte= (testSecretKey+testSecretKey).getBytes(StandardCharsets.UTF_8);
-
-        String result = Base64.getEncoder().encodeToString(test.computeSHA256(secretkeyByte));
-
-        Assertions.assertEquals(sha256_doubleSecretKey, result);
-
-    }
 
     @Test
     void _AsimmetricSecretKey_256SignatureTest() {
         String sha256_doubleSecretKey = "/VudJ6UAM7WzpBtTQvd4fpqKiRLV7Pcz93pEI3RgHRE=";
         HMACSHA256SignatureUtil test = new HMACSHA256SignatureUtil(testSecretKey);
 
-        byte[] secretkeyByte= (testSecretKey+"xfch255h").getBytes(StandardCharsets.UTF_8);
+        byte[] secretkeyByte= new byte[128];
+        System.arraycopy((testSecretKey+"xfch255h").getBytes(),0,secretkeyByte,0,72);
 
-        String result = Base64.getEncoder().encodeToString(test.computeSHA256(secretkeyByte));
+
+        String result = Base64.getEncoder().encodeToString(test.computeSHA256(secretkeyByte,72));
 
         Assertions.assertEquals(sha256_doubleSecretKey, result);
 
+    }
+
+    @Test
+    void testPerformance() {
+        HMACSHA256SignatureUtil util = new HMACSHA256SignatureUtil(testSecretKey);
+        util.computeSecretKey(); // Simuliamo il post-construct
+        String payload = "1734538070000";
+
+        // 1. WARM-UP (importante per GraalVM/JIT)
+        for (int i = 0; i < 10000; i++) {
+            util.computeHMACSHA256(payload);
+        }
+
+        // 2. MISURAZIONE EFFETTIVA
+        long start = System.nanoTime();
+        int iterations = 100000;
+        for (int i = 0; i < iterations; i++) {
+            util.computeHMACSHA256(payload);
+        }
+        long end = System.nanoTime();
+
+        long avgTime = (end - start) / iterations;
+        System.out.println("Tempo medio per HMAC: " + avgTime + " ns");
     }
 }

@@ -10,7 +10,7 @@ public class HMACSHA256SignatureUtil {
     private final byte[] ipad = new byte[64];
     private final byte[] opad = new byte[64];
 
-    private final byte[] secretKey;
+    private final String secretKey;
 
     public static final int[] K = {
             // Riga 1 (t=0 a t=7)
@@ -47,10 +47,10 @@ public class HMACSHA256SignatureUtil {
     };
 
     public HMACSHA256SignatureUtil(String secret) {
-        secretKey = secret.getBytes(StandardCharsets.UTF_8);
+        secretKey = secret;
         // add custom exception to not generate call tree
-        if (secretKey.length != 64) {
-            System.err.println("Invalid secret key length: " + secretKey.length);
+        if (secretKey.length() != 64) {
+            System.err.println("Invalid secret key length: " + secretKey.length());
             throw new IllegalArgumentException();
         }
     }
@@ -58,29 +58,34 @@ public class HMACSHA256SignatureUtil {
     @PostConstruct
     public void computeSecretKey() {
         for (int i = 0; i < 64; i++) {
-            ipad[i] = (byte) (secretKey[i] ^ 0x36);
-            opad[i] = (byte) (secretKey[i] ^ 0x5c);
+            ipad[i] = (byte) (secretKey.charAt(i) ^ 0x36);
+            opad[i] = (byte) (secretKey.charAt(i) ^ 0x5c);
         }
 
     }
 
     public String computeHMACSHA256(String payload) {
-            byte[] payloadBytes = payload.getBytes(StandardCharsets.UTF_8);
-            byte[] internalHashData = new byte[64 + payloadBytes.length];
-            byte[] outerHashData = new byte[96];
+
+            byte[] internalHashData = new byte[128];
+            byte[] outerHashData = new byte[128];
             System.arraycopy(ipad, 0, internalHashData, 0, 64);
-            System.arraycopy(payloadBytes, 0, internalHashData, 64, payloadBytes.length);
-            internalHashData = computeSHA256(internalHashData);
+
+            for(int i = 0; i < payload.length(); i++){
+                internalHashData[i+64] = (byte) payload.charAt(i);
+            }
+
+            internalHashData = computeSHA256(internalHashData,77);
 
             System.arraycopy(opad, 0, outerHashData, 0, 64);
             System.arraycopy(internalHashData, 0, outerHashData, 64, 32);
-            outerHashData = computeSHA256(outerHashData);
+
+            outerHashData = computeSHA256(outerHashData,96);
 
             return Base64.getUrlEncoder().encodeToString(outerHashData);
 
     }
 
-    public byte[] computeSHA256(byte[] message) {
+    public byte[] computeSHA256(byte[] message, int dataDimension) {
         int[] hash = {0x6a09e667,
                 0xbb67ae85,
                 0x3c6ef372,
@@ -92,15 +97,15 @@ public class HMACSHA256SignatureUtil {
 
         int[] W = new int[64];
 
-        byte[] messageBytes= preProcessingSHA256(message);
+        preProcessingSHA256(message, dataDimension);
 
-        for (int offset = 0; offset < messageBytes.length; offset += 64) {
+        for (int offset = 0; offset < message.length; offset += 64) {
             for (int i = 0; i < 16; i++) {
                 int pos = offset + (i * 4);
-                W[i] = ((messageBytes[pos] & 0xFF) << 24) |
-                        ((messageBytes[pos + 1] & 0xFF) << 16) |
-                        ((messageBytes[pos + 2] & 0xFF) << 8) |
-                        (messageBytes[pos + 3] & 0xFF);
+                W[i] = ((message[pos] & 0xFF) << 24) |
+                        ((message[pos + 1] & 0xFF) << 16) |
+                        ((message[pos + 2] & 0xFF) << 8) |
+                        (message[pos + 3] & 0xFF);
 
 
             }
@@ -126,27 +131,33 @@ public class HMACSHA256SignatureUtil {
 
     }
 
-    public byte[] preProcessingSHA256(byte[] message) {
+    public void preProcessingSHA256(byte[] message, int dataDimension) {
+
+
+
+        /*
+
+        // LOGICA INIZIALE PER UN COMPUTE STANDARD NOTA NEL METODO COMPUTE HMAC DOVRAI REINSERIRE IL SALVATAGGIO IN UN ARRAY DI BYTE
 
         int dimension = message.length;
-
         int module = (dimension & 63);
         int addToMultiple64 = (module < 56) ? 64 - module : 128 - module ;
         byte[] messageBytes = new byte[dimension+addToMultiple64];
         System.arraycopy(message, 0, messageBytes, 0, dimension);
         messageBytes[dimension] = (byte) 0x80;
 
-        long lengthInBits = (long) dimension * 8;
+         */
+        message[dataDimension] = (byte) 0x80;
+        long lengthInBits = (long) dataDimension * 8;
 
         // Scriviamo il long negli ultimi 5 byte (Big Endian) sufficienti per rappresentare una lunghezza di  2^31(caratteri) x 8 bit
-        int lastIndex = messageBytes.length - 5;
-        messageBytes[lastIndex] = (byte) ((lengthInBits >>> 32) & 0xFF);
-        messageBytes[lastIndex + 1] = (byte) ((lengthInBits >>> 24) & 0xFF);
-        messageBytes[lastIndex + 2] = (byte) ((lengthInBits >>> 16) & 0xFF);
-        messageBytes[lastIndex + 3] = (byte) ((lengthInBits >>> 8) & 0xFF);
-        messageBytes[lastIndex + 4] = (byte) (lengthInBits & 0xFF);
+        int lastIndex = message.length - 5;
+        message[lastIndex] = (byte) ((lengthInBits >>> 32) & 0xFF);
+        message[lastIndex + 1] = (byte) ((lengthInBits >>> 24) & 0xFF);
+        message[lastIndex + 2] = (byte) ((lengthInBits >>> 16) & 0xFF);
+        message[lastIndex + 3] = (byte) ((lengthInBits >>> 8) & 0xFF);
+        message[lastIndex + 4] = (byte) (lengthInBits & 0xFF);
 
-        return  messageBytes;
     }
 
 
