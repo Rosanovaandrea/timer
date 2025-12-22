@@ -13,23 +13,24 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
+@Table(
+
+        indexes = {
+                @Index(name = "idx_timer_temporal", columnList = "start_time, end_time")
+        }
+)
 public class Timer {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
-    long id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private long id;
 
-    @Column(unique = true)
-    String name;
+    @Column(unique = true, nullable = false)
+    private String timerName;
 
-    @Column(unique = true)
-    String timerName;
+    @Column(name = "start_time", nullable = false,unique = true)
+    private int startTime;
 
-    @Column(unique = true)
-    LocalDateTime start;
-
-    @Column(unique = true)
-    LocalDateTime end;
-
-
+    @Column(name = "end_time", nullable = false,unique = true)
+    private int endTime;
 }

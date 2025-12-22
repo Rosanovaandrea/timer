@@ -10,7 +10,7 @@ public class HashMapInt {
     private int size = 0;
 
     public HashMapInt(){
-        // array molto ampio per evitare collisioni e con potenza di 2 per usare il bitwise and mask come modulo
+        // array molto ampio per evitare collisioni e con potenza di 2 per usare il bitwise AND mask come modulo
         bucket = new int[64];
     }
 
