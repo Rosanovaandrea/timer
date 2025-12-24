@@ -83,7 +83,7 @@ public class TimerRepository {
     // Helper per mappare l'oggetto intero
     private Timer mapRowToTimer(ResultSet rs) throws SQLException {
         Timer t = new Timer();
-        t.setId(rs.getLong("id"));
+        t.setId(rs.getInt("id"));
         t.setTimerName(rs.getString("timer_name"));
         t.setStartTime(rs.getInt("start_time"));
         t.setEndTime(rs.getInt("end_time"));

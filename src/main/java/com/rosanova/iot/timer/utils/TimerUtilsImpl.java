@@ -16,7 +16,7 @@ public class TimerUtilsImpl {
     private static final String[] COMMAND_PREFIX = {"/bin/sh", "-c"};
 
     //file
-    private static final String[] FILE_STATIC = {"[Unit]\nDescription=Custom Timer for ", "\n\n[Timer]\nOnCalendar=", "\nUnit=", "\n\n[Install]\nWantedBy=timers.target\n"};
+    private static final String[] FILE_STATIC = {"[Unit]\nDescription=Custom Timer for ", "\n\n[Timer]\nOnCalendar= *-*-* ", "\nUnit=", "\n\n[Install]\nWantedBy=timers.target\n"};
 
     //command
     private static final String[] COMMAND = {"sudo /usr/bin/systemctl daemon-reload", " && sudo /usr/bin/systemctl enable ", " && sudo /usr/bin/systemctl start "};
@@ -69,7 +69,15 @@ public class TimerUtilsImpl {
             Path tempTimerFile = tempDir.resolve(fullTimerName);
             Path targetTimerFile = targetDir.resolve(fullTimerName);
 
-            return writeTimer(tempTimerFile, timerContent) + moveTimer(tempTimerFile, targetTimerFile);
+            if(writeTimer(tempTimerFile,timerContent.toString()) != SUCCESS) {
+                return ERROR;
+            }
+
+            if(moveTimer(tempTimerFile, targetTimerFile) != SUCCESS) {
+                return ERROR;
+            }
+
+            return SUCCESS;
 
     }
 
@@ -109,9 +117,9 @@ public class TimerUtilsImpl {
 
 
 
-    public int writeTimer(Path tempTimerFile, StringBuilder timerContent) {
+    public int writeTimer(Path tempTimerFile, String timerContent) {
         try {
-            Files.writeString(tempTimerFile, timerContent.toString());
+            Files.writeString(tempTimerFile, timerContent);
             return SUCCESS;
         } catch (IOException e) {
             System.err.println(ERROR_IO_TIMER_WRITE);
