@@ -166,7 +166,7 @@ public class TimerUtilsImpl {
         fullCommand[2] = commandBuilder.toString();
 
         try {
-            ProcessBuilder pb = new ProcessBuilder(fullCommand);
+            ProcessBuilder pb = getProcessBuilder(fullCommand);
 
             Process process = pb.start();
 
@@ -188,6 +188,10 @@ public class TimerUtilsImpl {
         return SUCCESS;
     }
 
+    public ProcessBuilder getProcessBuilder(String[] command){
+        return new ProcessBuilder(command);
+    }
+
     /**
      * Disattivazione del .timer
      * Esegue tutti i comandi 'systemctl' concatenati con '&&' in una singola shell.
@@ -203,7 +207,7 @@ public class TimerUtilsImpl {
 
         StringBuilder commandBuilder = new StringBuilder(150);
 
-        commandBuilder.append(COMMAND_DEACTIVATION[0])
+        commandBuilder.append(COMMAND_DEACTIVATION[0]).append(fullTimerName)
                 .append(COMMAND_DEACTIVATION[1]).append(fullTimerName);
 
         String[] fullCommand = new String[3];
@@ -212,7 +216,7 @@ public class TimerUtilsImpl {
         fullCommand[2] = commandBuilder.toString();
 
         try {
-            ProcessBuilder pb = new ProcessBuilder(fullCommand);
+            ProcessBuilder pb = getProcessBuilder(fullCommand);
 
             Process process = pb.start();
 
