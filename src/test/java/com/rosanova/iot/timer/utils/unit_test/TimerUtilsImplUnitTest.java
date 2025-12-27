@@ -1,6 +1,7 @@
 package com.rosanova.iot.timer.utils.unit_test;
 
-import com.rosanova.iot.timer.utils.TimerUtilsImpl;
+import com.rosanova.iot.timer.Result;
+import com.rosanova.iot.timer.utils.impl.TimerUtilsImpl;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -34,8 +35,8 @@ class TimerUtilsImplUnitTest {
         Path tmpTargetFile = Paths.get(TMP_DIR).resolve(timerName+".timer");
         Path targetTimerFile = Paths.get(SYSTEM_DIR).resolve(timerName+".timer");
 
-        doReturn(0).when(timerUtilsImpl).writeTimer( Mockito.any(),Mockito.any());
-        doReturn(0).when(timerUtilsImpl).moveTimer(Mockito.any(),Mockito.any());
+        doReturn(Result.SUCCESS).when(timerUtilsImpl).writeTimer( Mockito.any(),Mockito.any());
+        doReturn(Result.SUCCESS).when(timerUtilsImpl).moveTimer(Mockito.any(),Mockito.any());
 
         String onCalendar = "10:00:00";
         String tempFile = FILE_STATIC[0]+SERVICE_FILE_NAME+FILE_STATIC[1]+onCalendar+FILE_STATIC[2]+SERVICE_FILE_NAME+ FILE_STATIC[3];
@@ -52,12 +53,12 @@ class TimerUtilsImplUnitTest {
         Path tmpTargetFile = Paths.get(TMP_DIR).resolve(timerName+".timer");
         Path targetTimerFile = Paths.get(SYSTEM_DIR).resolve(timerName+".timer");
 
-        doReturn(1).when(timerUtilsImpl).writeTimer( Mockito.any(),Mockito.any());
+        doReturn(Result.ERROR).when(timerUtilsImpl).writeTimer( Mockito.any(),Mockito.any());
 
         String onCalendar = "10:00:00";
         String tempFile = FILE_STATIC[0]+SERVICE_FILE_NAME+FILE_STATIC[1]+onCalendar+FILE_STATIC[2]+SERVICE_FILE_NAME+ FILE_STATIC[3];
 
-        Assertions.assertEquals(1, timerUtilsImpl.createSystemdTimerUnit(timerName,onCalendar));
+        Assertions.assertEquals(Result.ERROR, timerUtilsImpl.createSystemdTimerUnit(timerName,onCalendar));
 
         verify(timerUtilsImpl).writeTimer(Mockito.eq(tmpTargetFile),Mockito.eq(tempFile));
         verify(timerUtilsImpl,Mockito.times(0)).moveTimer(Mockito.any(),Mockito.any());
@@ -69,13 +70,13 @@ class TimerUtilsImplUnitTest {
         Path tmpTargetFile = Paths.get(TMP_DIR).resolve(timerName+".timer");
         Path targetTimerFile = Paths.get(SYSTEM_DIR).resolve(timerName+".timer");
 
-        doReturn(0).when(timerUtilsImpl).writeTimer( Mockito.any(),Mockito.any());
-        doReturn(1).when(timerUtilsImpl).moveTimer(Mockito.any(),Mockito.any());
+        doReturn(Result.SUCCESS).when(timerUtilsImpl).writeTimer( Mockito.any(),Mockito.any());
+        doReturn(Result.ERROR).when(timerUtilsImpl).moveTimer(Mockito.any(),Mockito.any());
 
         String onCalendar = "10:00:00";
         String tempFile = FILE_STATIC[0]+SERVICE_FILE_NAME+FILE_STATIC[1]+onCalendar+FILE_STATIC[2]+SERVICE_FILE_NAME+ FILE_STATIC[3];
 
-        Assertions.assertEquals(1, timerUtilsImpl.createSystemdTimerUnit(timerName,onCalendar));
+        Assertions.assertEquals(Result.ERROR, timerUtilsImpl.createSystemdTimerUnit(timerName,onCalendar));
 
         verify(timerUtilsImpl).writeTimer(Mockito.eq(tmpTargetFile),Mockito.eq(tempFile));
         verify(timerUtilsImpl).moveTimer(Mockito.eq(tmpTargetFile),Mockito.eq(targetTimerFile));
@@ -94,10 +95,9 @@ class TimerUtilsImplUnitTest {
         when(mockProcess.waitFor()).thenReturn(0); // Successo
 
         // Esecuzione
-        int result = timerUtilsImpl.activateSystemdTimer(timerName);
+        Result result = timerUtilsImpl.activateSystemdTimer(timerName);
 
-        // Verifica
-        Assertions.assertEquals(0, result);
+        Assertions.assertEquals(Result.SUCCESS, result);
 
         // Verifica dei parametri passati al ProcessBuilder (Array di 3 stringhe)
         String[] expectedFullCommand = {"/bin/sh", "-c", CMD_ACTIVATE};
@@ -115,9 +115,9 @@ class TimerUtilsImplUnitTest {
         when(mockPb.start()).thenReturn(mockProcess);
         when(mockProcess.waitFor()).thenReturn(1); // Errore di sistema
 
-        int result = timerUtilsImpl.activateSystemdTimer(timerName);
+        Result result = timerUtilsImpl.activateSystemdTimer(timerName);
 
-        Assertions.assertEquals(1, result);
+        Assertions.assertEquals(Result.ERROR, result);
         verify(timerUtilsImpl).getProcessBuilder(any());
     }
 
@@ -130,9 +130,9 @@ class TimerUtilsImplUnitTest {
         // Simuliamo un fallimento fisico dell'esecuzione (es. comando non trovato)
         when(mockPb.start()).thenThrow(new IOException("Simulated IO Error"));
 
-        int result = timerUtilsImpl.activateSystemdTimer(timerName);
+        Result result = timerUtilsImpl.activateSystemdTimer(timerName);
 
-        Assertions.assertEquals(1, result);
+        Assertions.assertEquals(Result.ERROR, result);
         verify(timerUtilsImpl).getProcessBuilder(any());
     }
 
@@ -146,9 +146,9 @@ class TimerUtilsImplUnitTest {
         when(mockPb.start()).thenReturn(mockProcess);
         when(mockProcess.waitFor()).thenReturn(0);
 
-        int result = timerUtilsImpl.deactivateSystemdTimer(timerName);
+        Result result = timerUtilsImpl.deactivateSystemdTimer(timerName);
 
-        Assertions.assertEquals(0, result);
+        Assertions.assertEquals(Result.SUCCESS, result);
 
         // Verifica specifica del comando di disattivazione
         String[] expectedFullCommand = {"/bin/sh", "-c", CMD_DEACTIVATE};
@@ -166,9 +166,9 @@ class TimerUtilsImplUnitTest {
         // Simuliamo l'interruzione del thread durante l'attesa del processo
         when(mockProcess.waitFor()).thenThrow(new InterruptedException());
 
-        int result = timerUtilsImpl.deactivateSystemdTimer(timerName);
+        Result result = timerUtilsImpl.deactivateSystemdTimer(timerName);
 
-        Assertions.assertEquals(1, result);
+        Assertions.assertEquals(Result.ERROR, result);
     }
 
 }

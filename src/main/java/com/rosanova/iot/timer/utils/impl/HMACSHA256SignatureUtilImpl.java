@@ -1,11 +1,10 @@
-package com.rosanova.iot.timer.utils;
+package com.rosanova.iot.timer.utils.impl;
 
 import jakarta.annotation.PostConstruct;
 
-import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
-public class HMACSHA256SignatureUtil {
+public class HMACSHA256SignatureUtilImpl {
 
     private final byte[] ipad = new byte[64];
     private final byte[] opad = new byte[64];
@@ -46,7 +45,7 @@ public class HMACSHA256SignatureUtil {
             0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
     };
 
-    public HMACSHA256SignatureUtil(String secret) {
+    public HMACSHA256SignatureUtilImpl(String secret) {
         secretKey = secret;
         // add custom exception to not generate call tree
         if (secretKey.length() != 64) {

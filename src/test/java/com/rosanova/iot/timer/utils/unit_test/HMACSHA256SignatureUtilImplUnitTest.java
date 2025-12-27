@@ -1,13 +1,12 @@
 package com.rosanova.iot.timer.utils.unit_test;
 
-import com.rosanova.iot.timer.utils.HMACSHA256SignatureUtil;
+import com.rosanova.iot.timer.utils.impl.HMACSHA256SignatureUtilImpl;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
-class HMACSHA256SignatureUtilUnitTest {
+class HMACSHA256SignatureUtilImplUnitTest {
 
     final String testSecretKey = "4vE9tZ2mP7qL5xR1nB8yW3kS6jD0hF4gA7sC2vN9mQ1pL8zX5rT3bY6nK0jH2wM4";
 
@@ -15,7 +14,7 @@ class HMACSHA256SignatureUtilUnitTest {
     void _1734538070000_HMACSHA256SignatureTest() {
         String _1734538070000 = "1734538070000";
         String HMACsha256_1734538070000 = "0ffPZJNO98zXi7kXI8POhIRStpv1C7L4PuIxWlkKZ0E=";
-        HMACSHA256SignatureUtil test = new HMACSHA256SignatureUtil(testSecretKey);
+        HMACSHA256SignatureUtilImpl test = new HMACSHA256SignatureUtilImpl(testSecretKey);
 
         //call postConstruct
         test.computeSecretKey();
@@ -30,7 +29,7 @@ class HMACSHA256SignatureUtilUnitTest {
     @Test
     void _AsimmetricSecretKey_256SignatureTest() {
         String sha256_doubleSecretKey = "/VudJ6UAM7WzpBtTQvd4fpqKiRLV7Pcz93pEI3RgHRE=";
-        HMACSHA256SignatureUtil test = new HMACSHA256SignatureUtil(testSecretKey);
+        HMACSHA256SignatureUtilImpl test = new HMACSHA256SignatureUtilImpl(testSecretKey);
 
         byte[] secretkeyByte= new byte[128];
         System.arraycopy((testSecretKey+"xfch255h").getBytes(),0,secretkeyByte,0,72);
@@ -44,7 +43,7 @@ class HMACSHA256SignatureUtilUnitTest {
 
     @Test
     void testPerformance() {
-        HMACSHA256SignatureUtil util = new HMACSHA256SignatureUtil(testSecretKey);
+        HMACSHA256SignatureUtilImpl util = new HMACSHA256SignatureUtilImpl(testSecretKey);
         util.computeSecretKey(); // Simuliamo il post-construct
         String payload = "1734538070000";
 

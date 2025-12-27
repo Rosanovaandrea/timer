@@ -1,6 +1,9 @@
-package com.rosanova.iot.timer.utils;
+package com.rosanova.iot.timer.utils.impl;
 
+import com.rosanova.iot.timer.Result;
+import com.rosanova.iot.timer.utils.TimerUtils;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -8,9 +11,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 
-public class TimerUtilsImpl {
-    public static final int SUCCESS = 0;
-    public static final int ERROR = 1;
+@Service
+public class TimerUtilsImpl implements TimerUtils {
+
 
     private static final String TIMER_FILE_EXTENSION = ".timer";
     private static final String[] COMMAND_PREFIX = {"/bin/sh", "-c"};
@@ -54,7 +57,7 @@ public class TimerUtilsImpl {
      * @param onCalendar L'orario di esecuzione configurabile.
      * @return Codice di stato: 0 (SUCCESS), 1 (ERROR).
      */
-    public int createSystemdTimerUnit(String timerBaseName, String onCalendar) {
+    public Result createSystemdTimerUnit(String timerBaseName, String onCalendar) {
 
         String fullTimerName = timerBaseName + TIMER_FILE_EXTENSION;
 
@@ -69,15 +72,15 @@ public class TimerUtilsImpl {
             Path tempTimerFile = tempDir.resolve(fullTimerName);
             Path targetTimerFile = targetDir.resolve(fullTimerName);
 
-            if(writeTimer(tempTimerFile,timerContent.toString()) != SUCCESS) {
-                return ERROR;
+            if(writeTimer(tempTimerFile,timerContent.toString()) != Result.SUCCESS) {
+                return Result.ERROR;
             }
 
-            if(moveTimer(tempTimerFile, targetTimerFile) != SUCCESS) {
-                return ERROR;
+            if(moveTimer(tempTimerFile, targetTimerFile) != Result.SUCCESS) {
+                return Result.ERROR;
             }
 
-            return SUCCESS;
+            return Result.SUCCESS;
 
     }
 
@@ -86,7 +89,7 @@ public class TimerUtilsImpl {
      * @param timerBaseName Il nome base del file (es. "myjob").
      * @return Codice di stato: 0 (SUCCESS), 1 (ERROR).
      */
-    public int deleteSystemdTimerUnit(String timerBaseName) {
+    public Result deleteSystemdTimerUnit(String timerBaseName) {
 
         String fullTimerName = timerBaseName + TIMER_FILE_EXTENSION;
 
@@ -103,7 +106,7 @@ public class TimerUtilsImpl {
      * @param timerBaseName Il nome base del file (es. "myjob").
      * @return Codice di stato: 0 (SUCCESS), 1 (ERROR).
      */
-    public int reversSystemdTimerUnitInsert(String timerBaseName) {
+    public Result reversSystemdTimerUnitInsert(String timerBaseName) {
 
         String fullTimerName = timerBaseName + TIMER_FILE_EXTENSION;
 
@@ -117,25 +120,25 @@ public class TimerUtilsImpl {
 
 
 
-    public int writeTimer(Path tempTimerFile, String timerContent) {
+    public Result writeTimer(Path tempTimerFile, String timerContent) {
         try {
             Files.writeString(tempTimerFile, timerContent);
-            return SUCCESS;
+            return Result.SUCCESS;
         } catch (IOException e) {
             System.err.println(ERROR_IO_TIMER_WRITE);
-            return ERROR;
+            return Result.ERROR;
         }
     }
 
-    public int moveTimer(Path source,Path destination) {
+    public Result moveTimer(Path source,Path destination) {
         try {
             if(Files.exists(source)) {
                 Files.move(source, destination, StandardCopyOption.REPLACE_EXISTING);
             }
-            return SUCCESS;
+            return Result.SUCCESS;
 
         } catch (IOException e) {
-            return ERROR;
+            return Result.ERROR;
         }
     }
 
@@ -149,7 +152,7 @@ public class TimerUtilsImpl {
      * @param timerBaseName Il nome base del file .timer senza estensione (es. "myjob").
      * @return Codice di stato: 0 (SUCCESS), 1 (ERROR).
      */
-    public int activateSystemdTimer(String timerBaseName) {
+    public Result activateSystemdTimer(String timerBaseName) {
 
         final String fullTimerName = timerBaseName + TIMER_FILE_EXTENSION;
 
@@ -174,18 +177,18 @@ public class TimerUtilsImpl {
 
             if (exitCode != 0) {
                 System.err.println(ERROR_SYSTEMCTL);
-                return ERROR;
+                return Result.ERROR;
             }
 
         } catch (IOException e) {
             System.err.println(ERROR_SYSTEMCTL_IO);
-            return ERROR;
+            return Result.ERROR;
         } catch (InterruptedException e) {
             System.err.println(ERROR_SYSTEMCTL_THREAD);
-            return ERROR;
+            return Result.ERROR;
         }
 
-        return SUCCESS;
+        return Result.SUCCESS;
     }
 
     public ProcessBuilder getProcessBuilder(String[] command){
@@ -200,7 +203,7 @@ public class TimerUtilsImpl {
      * @param timerBaseName Il nome baIO_ERROR), 2 (INVALID_PARAM_se del file .timer senza estensione (es. "myjob").
      * @return Codice di stato: 0 (SUCCESS), 1 (ERROR).
      */
-    public int deactivateSystemdTimer(String timerBaseName) {
+    public Result deactivateSystemdTimer(String timerBaseName) {
 
         final String fullTimerName = timerBaseName + TIMER_FILE_EXTENSION;
 
@@ -224,17 +227,17 @@ public class TimerUtilsImpl {
 
             if (exitCode != 0) {
                 System.err.println(ERROR_SYSTEMCTL);
-                return ERROR;
+                return Result.ERROR;
             }
 
         } catch (IOException e) {
             System.err.println(ERROR_SYSTEMCTL_IO);
-            return ERROR;
+            return Result.ERROR;
         } catch (InterruptedException e) {
             System.err.println(ERROR_SYSTEMCTL_THREAD);
-            return ERROR;
+            return Result.ERROR;
         }
 
-        return SUCCESS;
+        return Result.SUCCESS;
     }
 }

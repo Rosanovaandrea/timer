@@ -1,4 +1,4 @@
-package com.rosanova.iot.timer.utils;
+package com.rosanova.iot.timer.utils.impl;
 
 import lombok.Getter;
 
