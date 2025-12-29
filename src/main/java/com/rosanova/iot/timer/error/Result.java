@@ -1,4 +1,4 @@
-package com.rosanova.iot.timer;
+package com.rosanova.iot.timer.error;
 
 public enum Result {
     SUCCESS,

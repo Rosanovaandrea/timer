@@ -1,6 +1,6 @@
 package com.rosanova.iot.timer.timer.service;
 
-import com.rosanova.iot.timer.Result;
+import com.rosanova.iot.timer.error.Result;
 import com.rosanova.iot.timer.timer.Timer;
 
 import java.util.List;

@@ -1,6 +1,6 @@
 package com.rosanova.iot.timer.utils.unit_test;
 
-import com.rosanova.iot.timer.Result;
+import com.rosanova.iot.timer.error.Result;
 import com.rosanova.iot.timer.utils.impl.TimerUtilsImpl;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -21,9 +21,10 @@ class TimerUtilsImplUnitTest {
     final String TMP_DIR = "tmpDir";
     final String SYSTEM_DIR = "systemDir";
     final String SERVICE_FILE_NAME = "alarm.service";
+    private static final String DAEMON_RELOAD = "sudo /usr/bin/systemctl daemon-reload";
     final String[] FILE_STATIC = {"[Unit]\nDescription=Custom Timer for ", "\n\n[Timer]\nOnCalendar= *-*-* ", "\nUnit=", "\n\n[Install]\nWantedBy=timers.target\n"};
 
-    final String CMD_ACTIVATE = "sudo /usr/bin/systemctl daemon-reload && sudo /usr/bin/systemctl enable 123.timer && sudo /usr/bin/systemctl start 123.timer";
+    final String CMD_ACTIVATE = "sudo /usr/bin/systemctl enable 123.timer && sudo /usr/bin/systemctl start 123.timer";
     final String CMD_DEACTIVATE = "sudo /usr/bin/systemctl stop 123.timer && sudo /usr/bin/systemctl disable 123.timer";
 
     @Spy

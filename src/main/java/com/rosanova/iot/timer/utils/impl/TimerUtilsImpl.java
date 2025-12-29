@@ -1,6 +1,6 @@
 package com.rosanova.iot.timer.utils.impl;
 
-import com.rosanova.iot.timer.Result;
+import com.rosanova.iot.timer.error.Result;
 import com.rosanova.iot.timer.utils.TimerUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -21,8 +21,10 @@ public class TimerUtilsImpl implements TimerUtils {
     //file
     private static final String[] FILE_STATIC = {"[Unit]\nDescription=Custom Timer for ", "\n\n[Timer]\nOnCalendar= *-*-* ", "\nUnit=", "\n\n[Install]\nWantedBy=timers.target\n"};
 
+    private static final String DAEMON_RELOAD = "sudo /usr/bin/systemctl daemon-reload";
+
     //command
-    private static final String[] COMMAND = {"sudo /usr/bin/systemctl daemon-reload", " && sudo /usr/bin/systemctl enable ", " && sudo /usr/bin/systemctl start "};
+    private static final String[] COMMAND = {"sudo /usr/bin/systemctl enable ", " && sudo /usr/bin/systemctl start "};
 
     //deactivate-command
     private static final String[] COMMAND_DEACTIVATION = { "sudo /usr/bin/systemctl stop ", " && sudo /usr/bin/systemctl disable "};
@@ -142,6 +144,39 @@ public class TimerUtilsImpl implements TimerUtils {
         }
     }
 
+    /**
+     * timer daemon reload per mostrare il .timer aggiunto a systemctl
+    * **/
+    public Result timerReload() {
+
+        String[] fullCommand = new String[3];
+        fullCommand[0] = COMMAND_PREFIX[0]; // /bin/sh
+        fullCommand[1] = COMMAND_PREFIX[1]; // -c
+        fullCommand[2] = DAEMON_RELOAD;
+
+        try {
+            ProcessBuilder pb = getProcessBuilder(fullCommand);
+
+            Process process = pb.start();
+
+            int exitCode = process.waitFor();
+
+            if (exitCode != 0) {
+                System.err.println(ERROR_SYSTEMCTL);
+                return Result.ERROR;
+            }
+
+        } catch (IOException e) {
+            System.err.println(ERROR_SYSTEMCTL_IO);
+            return Result.ERROR;
+        } catch (InterruptedException e) {
+            System.err.println(ERROR_SYSTEMCTL_THREAD);
+            return Result.ERROR;
+        }
+
+        return Result.SUCCESS;
+    }
+
 
 
     /**
@@ -159,9 +194,8 @@ public class TimerUtilsImpl implements TimerUtils {
 
         StringBuilder commandBuilder = new StringBuilder(150);
 
-        commandBuilder.append(COMMAND[0])
-                .append(COMMAND[1]).append(fullTimerName)
-                .append(COMMAND[2]).append(fullTimerName);
+        commandBuilder.append(COMMAND[0]).append(fullTimerName)
+                .append(COMMAND[1]).append(fullTimerName);
 
         String[] fullCommand = new String[3];
         fullCommand[0] = COMMAND_PREFIX[0]; // /bin/sh
