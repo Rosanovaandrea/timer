@@ -7,24 +7,190 @@ import com.rosanova.iot.timer.timer.dto.CheckTimerInsertValidity;
 import com.rosanova.iot.timer.timer.repository.TimerRepository;
 import com.rosanova.iot.timer.timer.service.impl.TimerServiceImpl;
 import com.rosanova.iot.timer.utils.TimerUtils;
-import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.Mockito;
+import org.mockito.*;
+import org.mockito.Mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class TimerServiceImplUnitTest {
 
     @Mock
-    TimerRepository repository;
-
+    private TimerRepository repository;
     @Mock
-    TimerUtils utils;
+    private TimerUtils timerUtils;
 
     @InjectMocks
-    TimerServiceImpl timerServiceImpl;
+    private TimerServiceImpl timerService;
+
+    private final String NAME = "TestTimer";
+    private final int TIME = 600_000; // 10 minuti (start sarà 5 min)
+    private final String FILE_NAME = "600000";
+
+    @Captor
+    private ArgumentCaptor<Timer> timerCaptor;
+    @Captor
+    private ArgumentCaptor<Integer> startPillowCaptor;
+    @Captor
+    private ArgumentCaptor<Integer> endPillowCaptor;
+
+    private final int EXPECTED_START = 300_000; // 600k - 300k
+    private final int EXPECTED_END = 600_000;
+    private final int EXPECTED_PILLOW_START = 180_000; // 300k - 120k
+    private final int EXPECTED_PILLOW_END = 720_000;   // 600k + 120k
+    private final String EXPECTED_CALENDAR = "00:05:00";
+
+    @Test
+    void insertTimer_Success_ShouldExecuteEverything() {
+        // GIVEN
+        CheckTimerInsertValidity ok = new CheckTimerInsertValidity(5, 0);
+        when(repository.countOverlapsAndMaxTimers(anyInt(), anyInt())).thenReturn(ok);
+        when(timerUtils.createSystemdTimerUnit(anyString(), anyString())).thenReturn(Result.SUCCESS);
+        when(timerUtils.timerReload()).thenReturn(Result.SUCCESS);
+        when(timerUtils.activateSystemdTimer(anyString())).thenReturn(Result.SUCCESS);
+
+        // WHEN
+        Result res = timerService.insertTimer(NAME, TIME);
+
+        // THEN
+        assertEquals(Result.SUCCESS, res);
+        verify(repository).insert(any(Timer.class));
+        verify(timerUtils).activateSystemdTimer(FILE_NAME);
+    }
+
+    @Test
+    void insertTimer_DbOverlap_ShouldThrowAndNotTouchUtils() {
+        // GIVEN: 1 sovrapposizione trovata
+        CheckTimerInsertValidity fail = new CheckTimerInsertValidity(1, 10);
+        when(repository.countOverlapsAndMaxTimers(anyInt(), anyInt())).thenReturn(fail);
+
+        // WHEN & THEN
+        assertThrows(TimerServiceException.class, () -> timerService.insertTimer(NAME, TIME));
+        verify(repository, never()).insert(any());
+        verifyNoInteractions(timerUtils);
+    }
+
+    @Test
+    void insertTimer_MaxLimitReached_ShouldThrow() {
+        // GIVEN: 20 timer totali già presenti
+        CheckTimerInsertValidity fail = new CheckTimerInsertValidity(20, 0);
+        when(repository.countOverlapsAndMaxTimers(anyInt(), anyInt())).thenReturn(fail);
+
+        assertThrows(TimerServiceException.class, () -> timerService.insertTimer(NAME, TIME));
+        verify(repository, never()).insert(any());
+    }
+
+    @Test
+    void insertTimer_FailStep1_ShouldRollbackOnlyFile() {
+        // GIVEN
+        setupValidDbCheck();
+        // Fallisce la creazione del file (Step 1)
+        when(timerUtils.createSystemdTimerUnit(anyString(), anyString())).thenReturn(Result.ERROR);
+
+        // WHEN & THEN
+        assertThrows(TimerServiceException.class, () -> timerService.insertTimer(NAME, TIME));
+
+        // Verifichiamo il rollback nel finally (step sarà 1)
+        verify(timerUtils).reversSystemdTimerUnitInsert(FILE_NAME);
+        verify(timerUtils, never()).deactivateSystemdTimer(anyString());
+        verify(timerUtils, never()).timerReload();
+    }
+
+    @Test
+    void insertTimer_FailStep2_ShouldRollbackFileAndReload() {
+        // GIVEN
+        setupValidDbCheck();
+        when(timerUtils.createSystemdTimerUnit(anyString(), anyString())).thenReturn(Result.SUCCESS);
+        // Fallisce il reload (Step 2)
+        when(timerUtils.timerReload()).thenReturn(Result.ERROR);
+
+        // WHEN & THEN
+        assertThrows(TimerServiceException.class, () -> timerService.insertTimer(NAME, TIME));
+
+        // In questo caso step = 2. Il finally esegue:
+        verify(timerUtils).reversSystemdTimerUnitInsert(FILE_NAME); // step > 0
+        verify(timerUtils, Mockito.times(2)).timerReload(); // step > 1 (chiamata di rollback)
+        verify(timerUtils, never()).deactivateSystemdTimer(anyString());
+    }
+
+    @Test
+    void insertTimer_FailStep3_ShouldRollbackAll() {
+        // GIVEN
+        setupValidDbCheck();
+        when(timerUtils.createSystemdTimerUnit(anyString(), anyString())).thenReturn(Result.SUCCESS);
+        when(timerUtils.timerReload()).thenReturn(Result.SUCCESS);
+        // Fallisce attivazione (Step 3)
+        when(timerUtils.activateSystemdTimer(anyString())).thenReturn(Result.ERROR);
+
+        // WHEN & THEN
+        assertThrows(TimerServiceException.class, () -> timerService.insertTimer(NAME, TIME));
+
+        // Step = 3. Il finally deve fare tutto:
+        verify(timerUtils).deactivateSystemdTimer(FILE_NAME); // step > 2
+        verify(timerUtils).reversSystemdTimerUnitInsert(FILE_NAME); // step > 0
+        verify(timerUtils, Mockito.times(2)).timerReload(); // Una per lo step 2, una nel finally (step > 1)
+    }
+
+    @Test
+    void insertTimer_Success_ShouldVerifyDataIntegrity() {
+        // GIVEN
+        CheckTimerInsertValidity ok = new CheckTimerInsertValidity(0, 0);
+        when(repository.countOverlapsAndMaxTimers(anyInt(), anyInt())).thenReturn(ok);
+        when(timerUtils.createSystemdTimerUnit(anyString(), anyString())).thenReturn(Result.SUCCESS);
+        when(timerUtils.timerReload()).thenReturn(Result.SUCCESS);
+        when(timerUtils.activateSystemdTimer(anyString())).thenReturn(Result.SUCCESS);
+
+        // WHEN
+        Result res = timerService.insertTimer(NAME, TIME);
+
+        // THEN
+        assertEquals(Result.SUCCESS, res);
+
+        // 1. Verifica i parametri passati alla query di validazione (Pillow)
+        verify(repository).countOverlapsAndMaxTimers(startPillowCaptor.capture(), endPillowCaptor.capture());
+        assertEquals(EXPECTED_PILLOW_START, startPillowCaptor.getValue(), "Start Pillow non corretto");
+        assertEquals(EXPECTED_PILLOW_END, endPillowCaptor.getValue(), "End Pillow non corretto");
+
+        // 2. Verifica l'oggetto Timer salvato nel DB
+        verify(repository).insert(timerCaptor.capture());
+        Timer savedTimer = timerCaptor.getValue();
+        assertEquals(NAME, savedTimer.getTimerName());
+        assertEquals(EXPECTED_START, savedTimer.getStartTime(), "StartTime DB non corretto");
+        assertEquals(EXPECTED_END, savedTimer.getEndTime(), "EndTime DB non corretto");
+
+        // 3. Verifica i parametri per Systemd (OnCalendar e Nome File)
+        // Nota: onCalendar usa 'start', quindi 300.000ms = 00:05:00
+        verify(timerUtils).createSystemdTimerUnit(eq("600000"), eq(EXPECTED_CALENDAR));
+        verify(timerUtils).activateSystemdTimer("600000");
+    }
+
+    @Test
+    void insertTimer_BoundaryCheck_ZeroInterval() {
+        // Test con il valore minimo permesso dal tuo padding (420.000 ms)
+        int minTime = 420_000;
+        setupValidDbCheck();
+        when(timerUtils.createSystemdTimerUnit(anyString(), anyString())).thenReturn(Result.SUCCESS);
+        when(timerUtils.timerReload()).thenReturn(Result.SUCCESS);
+        when(timerUtils.activateSystemdTimer(anyString())).thenReturn(Result.SUCCESS);
+
+        timerService.insertTimer(NAME, minTime);
+
+        // Con 420k: start = 120k, startPillow = 0
+        verify(repository).countOverlapsAndMaxTimers(eq(0), eq(540_000));
+        verify(timerUtils).createSystemdTimerUnit(anyString(), eq("00:02:00"));
+    }
+
+    private void setupValidDbCheck() {
+        CheckTimerInsertValidity ok = new CheckTimerInsertValidity(0, 0);
+        when(repository.countOverlapsAndMaxTimers(anyInt(), anyInt())).thenReturn(ok);
+    }
 
 }
