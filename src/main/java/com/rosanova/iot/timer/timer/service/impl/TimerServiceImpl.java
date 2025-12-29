@@ -7,6 +7,8 @@ import com.rosanova.iot.timer.timer.service.TimerService;
 import com.rosanova.iot.timer.utils.TimerUtils;
 import lombok.RequiredArgsConstructor;
 
+import java.util.List;
+
 @RequiredArgsConstructor
 public class TimerServiceImpl implements TimerService {
 
@@ -24,7 +26,7 @@ public class TimerServiceImpl implements TimerService {
     }
 
     @Override
-    public Timer getNextTimer(int start) {
-        return null;
+    public List<Timer> getAllTimers(int start) {
+        return List.of();
     }
 }
