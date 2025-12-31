@@ -53,7 +53,8 @@ public class TimerRepositoryImpl implements TimerRepository {
     @Cacheable(value = "timers", key = "#id")
     public Timer findById(long id) {
         String sql = "SELECT * FROM timer WHERE id = ?";
-        return jdbcTemplate.queryForObject(sql, (rs, rowNum) -> mapRowToTimer(rs), id);
+        List<Timer> results = jdbcTemplate.query(sql, (rs, rowNum) -> mapRowToTimer(rs), id);
+        return results.isEmpty() ? null : results.get(0);
     }
     /**
      * Ritorna un CheckTimerInsertValidity per il conteggio delle sovrapposizioni e il numero massimo di timers

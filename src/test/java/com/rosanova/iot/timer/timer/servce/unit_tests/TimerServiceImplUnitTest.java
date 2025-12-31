@@ -193,4 +193,125 @@ public class TimerServiceImplUnitTest {
         when(repository.countOverlapsAndMaxTimers(anyInt(), anyInt())).thenReturn(ok);
     }
 
+    @Test
+    void testDeleteTimerRight(){
+        int id = 1;
+        Timer timerToDelete = new Timer(id,"alarm_to_delete",50_000,120_000 );
+        doReturn(timerToDelete).when(repository).findById(id);
+        doNothing().when(repository).deleteById(id);
+        doReturn(Result.SUCCESS).when(timerUtils).deactivateSystemdTimer(String.valueOf(timerToDelete.getEndTime()));
+        doReturn(Result.SUCCESS).when(timerUtils).deleteSystemdTimerUnit(String.valueOf(timerToDelete.getEndTime()));
+        doReturn(Result.SUCCESS).when(timerUtils).timerReload();
+
+        Result result = timerService.removeTimer(id);
+
+        assertEquals(Result.SUCCESS, result);
+
+        verify(repository).findById(id);
+        verify(repository).deleteById(id);
+        verify(timerUtils).deactivateSystemdTimer(String.valueOf(timerToDelete.getEndTime()));
+        verify(timerUtils).deleteSystemdTimerUnit(String.valueOf(timerToDelete.getEndTime()));
+
+    }
+
+    @Test
+    void testDeleteTimerIdNotFound(){
+
+        int id = 1;
+        doReturn(null).when(repository).findById(id);
+
+        assertThrows(TimerServiceException.class, () -> timerService.removeTimer(id));
+
+        verify(repository,times(1)).findById(id);
+        verify(repository,times(0)).deleteById(anyInt());
+        verify(timerUtils,times(0)).deactivateSystemdTimer(anyString());
+        verify(timerUtils,times(0)).deleteSystemdTimerUnit(anyString());
+
+    }
+
+    @Test
+    void testDeleteTimerFailureAtDeactivate() {
+        int id = 1;
+        Timer timerToDelete = new Timer(id, "alarm", 50_000, 120_000);
+        String filename = String.valueOf(timerToDelete.getEndTime());
+
+        doReturn(timerToDelete).when(repository).findById(id);
+
+        doReturn(Result.ERROR).when(timerUtils).deactivateSystemdTimer(filename);
+
+        doReturn(Result.SUCCESS).when(timerUtils).timerReload();
+
+        assertThrows(TimerServiceException.class, () -> timerService.removeTimer(id));
+
+        verify(timerUtils).timerReload();
+        verify(timerUtils).activateSystemdTimer(filename);
+        verify(timerUtils, times(0)).reverseDeleteSystemdTimerUnit(anyString());
+    }
+
+    @Test
+    void testDeleteTimerFailureAtDeleteUnit() {
+        int id = 1;
+        Timer timerToDelete = new Timer(id, "alarm", 50_000, 120_000);
+        String filename = String.valueOf(timerToDelete.getEndTime());
+
+        doReturn(timerToDelete).when(repository).findById(id);
+        doReturn(Result.SUCCESS).when(timerUtils).deactivateSystemdTimer(filename);
+        // Fallimento al secondo step
+        doReturn(Result.ERROR).when(timerUtils).deleteSystemdTimerUnit(filename);
+
+        // Mock delle azioni di ripristino nel finally
+        doReturn(Result.SUCCESS).when(timerUtils).reverseDeleteSystemdTimerUnit(filename);
+        doReturn(Result.SUCCESS).when(timerUtils).activateSystemdTimer(filename);
+        doReturn(Result.SUCCESS).when(timerUtils).timerReload();
+
+        assertThrows(TimerServiceException.class, () -> timerService.removeTimer(id));
+
+        // Verifico che il rollback abbia provato a riattivare il timer
+        verify(timerUtils).activateSystemdTimer(filename);
+        verify(timerUtils).reverseDeleteSystemdTimerUnit(anyString());
+        verify(timerUtils).timerReload();
+    }
+
+    @Test
+    void testDeleteTimerFailureAtTimeReload() {
+        int id = 1;
+        Timer timerToDelete = new Timer(id, "alarm", 50_000, 120_000);
+        String filename = String.valueOf(timerToDelete.getEndTime());
+
+        doReturn(timerToDelete).when(repository).findById(id);
+        doReturn(Result.SUCCESS).when(timerUtils).deactivateSystemdTimer(filename);
+        // Fallimento al secondo step
+        doReturn(Result.SUCCESS).when(timerUtils).deleteSystemdTimerUnit(filename);
+
+        // Mock delle azioni di ripristino nel finally
+        doReturn(Result.SUCCESS).when(timerUtils).reverseDeleteSystemdTimerUnit(filename);
+        doReturn(Result.SUCCESS).when(timerUtils).activateSystemdTimer(filename);
+        doReturn(Result.ERROR,Result.SUCCESS).when(timerUtils).timerReload();
+
+
+        assertThrows(TimerServiceException.class, () -> timerService.removeTimer(id));
+
+        // Verifico che il rollback abbia provato a riattivare il timer
+        verify(timerUtils).activateSystemdTimer(filename);
+        verify(timerUtils).reverseDeleteSystemdTimerUnit(anyString());
+        verify(timerUtils,Mockito.times(2)).timerReload();
+    }
+
+    @Test
+    void testDeleteTimerFatalErrorDuringRollback() {
+        int id = 1;
+        Timer timerToDelete = new Timer(id, "alarm", 50_000, 120_000);
+        String filename = String.valueOf(timerToDelete.getEndTime());
+
+        doReturn(timerToDelete).when(repository).findById(id);
+        doReturn(Result.ERROR).when(timerUtils).deactivateSystemdTimer(filename);
+
+        // Il rollback fallisce miseramente
+        doReturn(Result.ERROR).when(timerUtils).timerReload();
+
+        assertThrows(TimerServiceException.class, () -> timerService.removeTimer(id));
+
+        verify(timerUtils, atLeastOnce()).timerReload();
+    }
+
 }

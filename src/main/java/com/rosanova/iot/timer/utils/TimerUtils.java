@@ -10,4 +10,5 @@ public interface TimerUtils {
     Result timerReload();
     Result activateSystemdTimer(String timerBaseName);
     Result deactivateSystemdTimer(String timerBaseName);
+    Result reverseDeleteSystemdTimerUnit(String timerBaseName);
 }

@@ -103,12 +103,64 @@ public class TimerServiceImpl implements TimerService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Result removeTimer(int id) {
-        return null;
+        Result result = Result.SUCCESS;
+        int step = 0;
+        String filename = null;
+
+        try{
+        Timer timerToDelete = repository.findById(id);
+
+        if (timerToDelete == null) throw new RuntimeException();
+
+        filename = String.valueOf(timerToDelete.getEndTime());
+        repository.deleteById(id);
+
+        result = timerUtils.deactivateSystemdTimer(filename);
+        step++;
+
+        if (result == Result.ERROR) throw new RuntimeException();
+
+        result = timerUtils.deleteSystemdTimerUnit(filename);
+        step++;
+
+        if (result == Result.ERROR) throw new RuntimeException();
+
+        result = timerUtils.timerReload();
+
+
+        if (result == Result.ERROR) throw new RuntimeException();
+
+        return result;
+
+        } catch (Exception e) {
+            throw new TimerServiceException(e.getMessage());
+        }finally {
+
+            Result reverseError = Result.SUCCESS;
+
+            try {
+                if(result == Result.ERROR) {
+
+                    if (step > 1 && timerUtils.reverseDeleteSystemdTimerUnit(filename) == Result.ERROR) reverseError = Result.ERROR;
+                    if (step > 0 && timerUtils.activateSystemdTimer(filename) == Result.ERROR) reverseError = Result.ERROR;
+                    if ( timerUtils.timerReload() == Result.ERROR) reverseError = Result.ERROR;
+
+
+                    if(reverseError == Result.ERROR) throw new RuntimeException();
+                }
+            }catch (Exception e){
+                System.err.println("fatal Error Rollback"+e.getMessage());
+            }
+
+        }
+
+
     }
 
     @Override
     public List<Timer> getAllTimers(int start) {
-        return List.of();
+        return repository.findAll();
     }
 }

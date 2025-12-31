@@ -87,6 +87,23 @@ public class TimerUtilsImpl implements TimerUtils {
     }
 
     /**
+     * funzione reverse della cancellazione del .timer
+     * @param timerBaseName Il nome base del file (es. "myjob").
+     * @return Codice di stato: 0 (SUCCESS), 1 (ERROR).
+     */
+    public Result reverseDeleteSystemdTimerUnit(String timerBaseName) {
+
+        String fullTimerName = timerBaseName + TIMER_FILE_EXTENSION;
+
+
+        Path tempTimerFile = tempDir.resolve(fullTimerName);
+        Path targetTimerFile = targetDir.resolve(fullTimerName);
+
+        return moveTimer( tempTimerFile, targetTimerFile);
+
+    }
+
+    /**
      * Elimina un file di configurazione .timer spostandolo nella cartella temporanea
      * @param timerBaseName Il nome base del file (es. "myjob").
      * @return Codice di stato: 0 (SUCCESS), 1 (ERROR).
