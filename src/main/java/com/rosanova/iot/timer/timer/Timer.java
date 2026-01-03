@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Entity
 @Table(
-
+        name = "timer",
         indexes = {
                 @Index(name = "idx_timer_temporal", columnList = "start_time, end_time")
         }

@@ -61,14 +61,15 @@ public class TimerRepositoryImpl implements TimerRepository {
      */
     public CheckTimerInsertValidity countOverlapsAndMaxTimers(int startToCheck, int endToCheck) {
         CheckTimerInsertValidity validity = new CheckTimerInsertValidity();
-        String sql = "SELECT COUNT(*) AS totalTimers, COUNT(CASE WHEN ? <= end_time AND ? >= start_time THEN 1 END) AS overlaps FROM timer";
-        jdbcTemplate.query(sql, (rs) -> {
-            if(rs.next()) {
-                validity.setTotal(rs.getInt("totalTimers"));
+        String sql = "SELECT COUNT(*) AS total_timers, COUNT(CASE WHEN ? <= end_time AND ? >= start_time THEN 1 END) AS overlaps FROM timer";
+        return jdbcTemplate.query(sql, (rs) -> {
+            if (rs.next()) {
+                validity.setTotal(rs.getInt("total_timers")); // Usa l'underscore come nel SQL
                 validity.setOverlaps(rs.getInt("overlaps"));
-                }
+            }
+            return validity;
             }, startToCheck, endToCheck);
-        return validity;
+
     }
 
 

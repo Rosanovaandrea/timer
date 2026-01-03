@@ -127,6 +127,7 @@ public class TimerServiceImpl implements TimerService {
 
         if (result == Result.ERROR) throw new RuntimeException();
 
+
         result = timerUtils.timerReload();
 
 

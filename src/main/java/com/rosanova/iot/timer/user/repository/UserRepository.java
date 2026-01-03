@@ -21,41 +21,35 @@ public class UserRepository {
 
     // ✅ Insert a new user
     public void insertUser(User user) {
-        String sql = "INSERT INTO users (username, password) VALUES (?, ?)";
+        String sql = "INSERT INTO user_timer (username, password) VALUES (?, ?)";
         jdbcTemplate.update(sql, user.getUsername(), user.getPassword());
     }
 
     // ✅ Delete a user by ID
     @CacheEvict(value = "users", allEntries = true)
     public void deleteUserById(long id) {
-        String sql = "DELETE FROM users WHERE id = ?";
+        String sql = "DELETE FROM user_timer WHERE id = ?";
         jdbcTemplate.update(sql, id);
     }
 
 
-    public boolean existsByUsername(String username) {
-        String sql = "SELECT COUNT(*) FROM users WHERE username = ?";
-        Integer result = jdbcTemplate.queryForObject(sql, Integer.class, username);
-        return result != null && result > 0;
-    }
-
-    public boolean existsByPassword(String username,String password) {
-        String sql = "SELECT COUNT(*) FROM users WHERE username = ? AND password = ?";
-        Integer result = jdbcTemplate.queryForObject(sql, Integer.class,username, password);
-        return result != null && result > 0;
+    public User getByUsername(String username) {
+        String sql = "SELECT * FROM user_timer WHERE username = ?";
+        List<User> result = jdbcTemplate.query(sql, (ResultSet rs, int rs2) -> mapToUser(rs), username);
+        return result.isEmpty() ? null : result.get(0);
     }
 
     // ✅ Retrieve all users
     @Cacheable(value = "users")
     public List<User> findAllUsers() {
-        String sql = "SELECT * FROM users";
+        String sql = "SELECT * FROM user_timer";
         return jdbcTemplate.query(sql, this::mapRowToUser);
     }
 
     // ✅ Find user by ID
     @Cacheable(value = "users", key = "#id")
     public User findById(long id) {
-        String sql = "SELECT * FROM users WHERE id = ?";
+        String sql = "SELECT * FROM user_timer WHERE id = ?";
         return jdbcTemplate.queryForObject(sql, (ResultSet rs, int rs2) -> mapToUser(rs), id);
     }
 
