@@ -1,7 +1,8 @@
 package com.rosanova.iot.timer.user.service;
 
 import com.rosanova.iot.timer.error.Result;
+import com.rosanova.iot.timer.user.dto.LoginReturnDto;
 
 public interface UserService {
-    Result login(String username,String password);
+    LoginReturnDto login(String username, String password);
 }

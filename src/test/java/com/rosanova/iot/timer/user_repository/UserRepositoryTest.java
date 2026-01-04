@@ -1,6 +1,6 @@
 package com.rosanova.iot.timer.user_repository;
 import com.rosanova.iot.timer.user.User;
-import com.rosanova.iot.timer.user.repository.UserRepository;
+import com.rosanova.iot.timer.user.repository.impl.UserRepositoryImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,14 +18,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @JdbcTest // Configura un DB in-memory e JdbcTemplate
-@Import(UserRepository.class) // Importa il repository perché @JdbcTest non scansiona i @Repository
+@Import(UserRepositoryImpl.class) // Importa il repository perché @JdbcTest non scansiona i @Repository
 class UserRepositoryTest {
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
     @Autowired
-    private UserRepository userRepository;
+    private UserRepositoryImpl userRepository;
 
     // RISOLUZIONE ERRORE: Configura un CacheManager per i test
     @TestConfiguration

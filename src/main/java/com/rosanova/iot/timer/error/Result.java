@@ -2,5 +2,8 @@ package com.rosanova.iot.timer.error;
 
 public enum Result {
     SUCCESS,
-    ERROR
+    ERROR,
+    BAD_REQUEST,
+    UNAUTHORIZED,
+    FORBIDDEN
 }

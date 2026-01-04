@@ -1,10 +1,13 @@
 package com.rosanova.iot.timer.utils.impl;
 
+import com.rosanova.iot.timer.utils.HMACSHA256SignatureUtil;
 import jakarta.annotation.PostConstruct;
+import org.springframework.stereotype.Service;
 
 import java.util.Base64;
 
-public class HMACSHA256SignatureUtilImpl {
+@Service
+public class HMACSHA256SignatureUtilImpl implements HMACSHA256SignatureUtil {
 
     private final byte[] ipad = new byte[64];
     private final byte[] opad = new byte[64];
@@ -140,7 +143,7 @@ public class HMACSHA256SignatureUtilImpl {
 
         int dimension = message.length;
         int module = (dimension & 63);
-        int addToMultiple64 = (module < 56) ? 64 - module : 128 - module ;
+        int addToMult0iple64 = (module < 56) ? 64 - module : 128 - module ;
         byte[] messageBytes = new byte[dimension+addToMultiple64];
         System.arraycopy(message, 0, messageBytes, 0, dimension);
         messageBytes[dimension] = (byte) 0x80;
