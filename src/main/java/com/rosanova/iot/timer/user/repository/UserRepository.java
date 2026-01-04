@@ -21,7 +21,7 @@ public class UserRepository {
 
     // ✅ Insert a new user
     public void insertUser(User user) {
-        String sql = "INSERT INTO user_timer (username, password) VALUES (?, ?)";
+        String sql = "INSERT INTO user_timer (user_name, password) VALUES (?, ?)";
         jdbcTemplate.update(sql, user.getUsername(), user.getPassword());
     }
 
@@ -34,7 +34,7 @@ public class UserRepository {
 
 
     public User getByUsername(String username) {
-        String sql = "SELECT * FROM user_timer WHERE username = ?";
+        String sql = "SELECT * FROM user_timer WHERE user_name = ?";
         List<User> result = jdbcTemplate.query(sql, (ResultSet rs, int rs2) -> mapToUser(rs), username);
         return result.isEmpty() ? null : result.get(0);
     }
@@ -57,7 +57,7 @@ public class UserRepository {
     private User mapRowToUser(ResultSet rs, int row) throws SQLException {
         User user = new User();
         user.setId(rs.getInt("id"));
-        user.setUsername(rs.getString("username"));
+        user.setUsername(rs.getString("user_name"));
         user.setPassword(rs.getString("password"));
         return user;
     }
@@ -66,7 +66,7 @@ public class UserRepository {
     private User mapToUser(ResultSet rs) throws SQLException {
         User user = new User();
         user.setId(rs.getInt("id"));
-        user.setUsername(rs.getString("username"));
+        user.setUsername(rs.getString("user_name"));
         user.setPassword(rs.getString("password"));
         return user;
     }
