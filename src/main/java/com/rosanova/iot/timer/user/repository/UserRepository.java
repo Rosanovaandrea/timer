@@ -10,4 +10,5 @@ public interface UserRepository {
     User getByUsername(String username);
     List<User> findAllUsers();
     User findById(long id);
+    void updateUser(long id, String password);
 }

@@ -82,6 +82,21 @@ class UserRepositoryTest {
     }
 
     @Test
+    @DisplayName("Dovrebbe cambiare la password")
+    void testPasswordChange() {
+        jdbcTemplate.update("INSERT INTO user_timer (user_name, password) VALUES (?, ?)", "test_user", "pass");
+        // Recuperiamo l'ID generato automaticamente
+        Long id = jdbcTemplate.queryForObject("SELECT id FROM user_timer WHERE user_name = 'test_user'", Long.class);
+
+        userRepository.updateUser(id, "new_pass");
+
+        User user = userRepository.findById(id);
+
+        assertThat(user).isNotNull();
+        assertThat(user.getPassword()).isEqualTo("new_pass");
+    }
+
+    @Test
     @DisplayName("Dovrebbe eliminare un utente tramite ID")
     void testDeleteUserById() {
         jdbcTemplate.update("INSERT INTO user_timer (user_name, password) VALUES (?, ?)", "delete_me", "pass");

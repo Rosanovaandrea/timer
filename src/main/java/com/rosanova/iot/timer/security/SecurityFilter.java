@@ -39,18 +39,18 @@ public class SecurityFilter extends OncePerRequestFilter {
                }
            }
 
-           if ( !(token != null  && !token.isEmpty() && token.length() != 78)) { response.sendError(HttpServletResponse.SC_UNAUTHORIZED); return;}
+           if ( !(token != null  && !token.isEmpty() && token.length() != 77)) { response.sendError(HttpServletResponse.SC_UNAUTHORIZED); return;}
 
            String hash = token.substring(14);
            String time = token.substring(0,14);
 
            String hashTime = hashingUtil.computeHMACSHA256(time);
 
-           if (!compareString(hash, hashTime)) {}
+           if (!compareString(hash, hashTime)) { response.sendError(HttpServletResponse.SC_UNAUTHORIZED); }
 
            long timeToCheck = Long.parseLong(time);
 
-           if(System.currentTimeMillis()-timeToCheck> 300_000) { response.sendError(HttpServletResponse.SC_FORBIDDEN); return;}
+           if(System.currentTimeMillis()-timeToCheck > 300_000) { response.sendError(HttpServletResponse.SC_FORBIDDEN); return;}
 
            filterChain.doFilter(request, response);
     }

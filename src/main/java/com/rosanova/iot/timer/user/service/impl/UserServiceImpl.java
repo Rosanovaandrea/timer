@@ -56,6 +56,24 @@ public class UserServiceImpl implements UserService {
 
     }
 
+    @Override
+    public Result changePassword(Long id, String oldPassword, String newPassword) {
+
+        User user = repository.findById(id);
+
+        if (user == null) {
+            return Result.ERROR;
+        }
+
+        if (!checkPassword(oldPassword, user.getPassword())) {
+            return Result.ERROR;
+        }
+
+        repository.updateUser(id,hashPassword(newPassword));
+        return Result.SUCCESS;
+
+    }
+
     public String hashPassword(String password){
         return BCrypt.hashpw(password, BCrypt.gensalt());
     }

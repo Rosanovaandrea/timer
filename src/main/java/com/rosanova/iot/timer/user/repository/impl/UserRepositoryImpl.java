@@ -26,6 +26,12 @@ public class UserRepositoryImpl implements UserRepository {
         jdbcTemplate.update(sql, user.getUsername(), user.getPassword());
     }
 
+    // ✅ update password
+    public void updateUser(long id, String password) {
+        String sql = "UPDATE user_timer SET password = ? WHERE id = ?";
+        jdbcTemplate.update(sql, password, id);
+    }
+
     // ✅ Delete a user by ID
     @CacheEvict(value = "users", allEntries = true)
     public void deleteUserById(long id) {
