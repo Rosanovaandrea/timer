@@ -16,6 +16,7 @@ import org.springframework.context.annotation.Import;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @JdbcTest // Configura un DB in-memory e JdbcTemplate
 @Import(UserRepositoryImpl.class) // Importa il repository perché @JdbcTest non scansiona i @Repository
@@ -66,6 +67,28 @@ class UserRepositoryTest {
 
         assertThat(users).hasSize(2);
         assertThat(users).extracting(User::getUsername).containsExactlyInAnyOrder("user1", "user2");
+    }
+
+    @Test
+    @DisplayName("Dovrebbe trovare il  numero di utenti")
+    void countUsers() {
+        jdbcTemplate.update("INSERT INTO user_timer (user_name, password) VALUES (?, ?)", "user1", "p1");
+        jdbcTemplate.update("INSERT INTO user_timer (user_name, password) VALUES (?, ?)", "user2", "p2");
+
+        int number = userRepository.findNumberOfUsers();
+
+        assertEquals(2, number);
+
+    }
+
+    @Test
+    @DisplayName("Dovrebbe trovare il  numero di utenti a 0")
+    void countUsersZero() {
+
+        int number = userRepository.findNumberOfUsers();
+
+        assertEquals(0, number);
+
     }
 
     @Test

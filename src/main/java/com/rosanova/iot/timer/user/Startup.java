@@ -7,6 +7,7 @@ import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.net.UnknownServiceException;
 
@@ -25,8 +26,9 @@ public class Startup {
     };
 
     @PostConstruct
+    @Transactional
     public void init(){
-        int isPresentAdmin = 1; //repositiory.getTotal();
+        int isPresentAdmin = repository.findNumberOfUsers();
 
         Result result = Result.SUCCESS;
 
@@ -37,6 +39,8 @@ public class Startup {
             } else if (isPresentAdmin > 0 && reset.equals(RESET)) {
                 result = initUserRoot(password);
             }
+
+            if(result == Result.ERROR) throw new UserServiceException("error");
 
         }catch (Exception e){
             System.out.println("errore nell' inizializzazione dell'user root");

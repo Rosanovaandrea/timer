@@ -21,12 +21,14 @@ public class UserRepositoryImpl implements UserRepository {
     }
 
     // ✅ Insert a new user
+    @CacheEvict(value = "users", allEntries = true)
     public void insertUser(User user) {
         String sql = "INSERT INTO user_timer (user_name, password) VALUES (?, ?)";
         jdbcTemplate.update(sql, user.getUsername(), user.getPassword());
     }
 
     // ✅ update password
+    @CacheEvict(value = "users", allEntries = true)
     public void updateUser(long id, String password) {
         String sql = "UPDATE user_timer SET password = ? WHERE id = ?";
         jdbcTemplate.update(sql, password, id);
@@ -40,6 +42,7 @@ public class UserRepositoryImpl implements UserRepository {
     }
 
 
+    @Cacheable(value = "users", key = "#username")
     public User getByUsername(String username) {
         String sql = "SELECT * FROM user_timer WHERE user_name = ?";
         List<User> result = jdbcTemplate.query(sql, (ResultSet rs, int rs2) -> mapToUser(rs), username);
@@ -47,10 +50,16 @@ public class UserRepositoryImpl implements UserRepository {
     }
 
     // ✅ Retrieve all users
-    @Cacheable(value = "users")
     public List<User> findAllUsers() {
         String sql = "SELECT * FROM user_timer";
         return jdbcTemplate.query(sql, this::mapRowToUser);
+    }
+
+    // ✅ Retrieve number of users
+
+    public int findNumberOfUsers() {
+        String sql = "SELECT COUNT(*) FROM user_timer";
+        return jdbcTemplate.queryForObject(sql, Integer.class);
     }
 
     // ✅ Find user by ID

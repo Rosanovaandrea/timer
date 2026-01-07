@@ -4,25 +4,23 @@ import com.rosanova.iot.timer.error.Result;
 import com.rosanova.iot.timer.error.UserServiceException;
 import com.rosanova.iot.timer.user.User;
 import com.rosanova.iot.timer.user.dto.LoginReturnDto;
+import com.rosanova.iot.timer.user.repository.UserRepository;
 import com.rosanova.iot.timer.user.repository.impl.UserRepositoryImpl;
 import com.rosanova.iot.timer.user.service.UserService;
 import com.rosanova.iot.timer.utils.HMACSHA256SignatureUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCrypt;
+import org.springframework.transaction.annotation.Transactional;
 
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
-
-    private final UserRepositoryImpl repository;
+    private final UserRepository repository;
     private final HMACSHA256SignatureUtil hashToken;
 
-
-
     @Override
+    @Transactional
     public LoginReturnDto login(String username, String password) {
-
-
 
             LoginReturnDto loginReturnDto = new LoginReturnDto();
 
@@ -37,8 +35,6 @@ public class UserServiceImpl implements UserService {
                 loginReturnDto.setResult(Result.BAD_REQUEST);
                 return loginReturnDto;
             }
-
-
 
             String time = String.valueOf(System.currentTimeMillis());
             StringBuilder timeToken = new StringBuilder(13);
@@ -57,6 +53,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public Result changePassword(Long id, String oldPassword, String newPassword) {
 
         User user = repository.findById(id);
