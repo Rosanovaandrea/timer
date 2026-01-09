@@ -8,21 +8,27 @@ import com.rosanova.iot.timer.timer.repository.TimerRepository;
 import com.rosanova.iot.timer.timer.service.TimerService;
 import com.rosanova.iot.timer.utils.TimerUtils;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
-@RequiredArgsConstructor
 public class TimerServiceImpl implements TimerService {
 
     private final TimerRepository repository;
+
     private final TimerUtils timerUtils;
+
     private final int pillowTime = 120_000;
     private final int intervalTime = 300_000;
 
-
+    public TimerServiceImpl(@Autowired  TimerRepository repository, @Qualifier("alarmTimer") TimerUtils timerUtils) {
+        this.repository = repository;
+        this.timerUtils = timerUtils;
+    }
 
     @Transactional(rollbackFor = Exception.class)
     public Result insertTimer(String name, int time) {
@@ -112,7 +118,7 @@ public class TimerServiceImpl implements TimerService {
         try{
         Timer timerToDelete = repository.findById(id);
 
-        if (timerToDelete == null) throw new RuntimeException();
+        if (timerToDelete == null) throw new TimerServiceException("error");
 
         filename = String.valueOf(timerToDelete.getEndTime());
         repository.deleteById(id);
@@ -120,18 +126,18 @@ public class TimerServiceImpl implements TimerService {
         result = timerUtils.deactivateSystemdTimer(filename);
         step++;
 
-        if (result == Result.ERROR) throw new RuntimeException();
+        if (result == Result.ERROR) throw new TimerServiceException("error");
 
         result = timerUtils.deleteSystemdTimerUnit(filename);
         step++;
 
-        if (result == Result.ERROR) throw new RuntimeException();
+        if (result == Result.ERROR) throw new TimerServiceException("error");
 
 
         result = timerUtils.timerReload();
 
 
-        if (result == Result.ERROR) throw new RuntimeException();
+        if (result == Result.ERROR) throw new TimerServiceException("error");
 
         return result;
 

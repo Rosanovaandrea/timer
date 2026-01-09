@@ -2,6 +2,7 @@ package com.rosanova.iot.timer.utils.impl;
 
 import com.rosanova.iot.timer.utils.HMACSHA256SignatureUtil;
 import jakarta.annotation.PostConstruct;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.Base64;
@@ -48,7 +49,7 @@ public class HMACSHA256SignatureUtilImpl implements HMACSHA256SignatureUtil {
             0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
     };
 
-    public HMACSHA256SignatureUtilImpl(String secret) {
+    public HMACSHA256SignatureUtilImpl(@Value("${hmac.secret}") String secret) {
         secretKey = secret;
         // add custom exception to not generate call tree
         if (secretKey.length() != 64) {

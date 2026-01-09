@@ -14,5 +14,11 @@ CREATE TABLE IF NOT EXISTS user_timer (
     password VARCHAR(255) NOT NULL
     );
 
+CREATE TABLE IF NOT EXISTS monitor_timer (
+                                             id BIGINT AUTO_INCREMENT PRIMARY KEY,
+                                             start INT NOT NULL UNIQUE,
+                                             stop INT NOT NULL
+);
+
 -- Indice per velocizzare le query di sovrapposizione
 CREATE INDEX IF NOT EXISTS idx_timer_temporal ON timer (start_time, end_time);

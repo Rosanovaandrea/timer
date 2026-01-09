@@ -2,7 +2,9 @@ package com.rosanova.iot.timer.utils.impl;
 
 import com.rosanova.iot.timer.error.Result;
 import com.rosanova.iot.timer.utils.TimerUtils;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -12,6 +14,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 
 @Service
+@Qualifier("alarmTimer")
 public class TimerUtilsImpl implements TimerUtils {
 
 
