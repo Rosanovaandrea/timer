@@ -1,8 +1,14 @@
 package com.rosanova.iot.timer.monitor.service;
 
+import com.rosanova.iot.timer.error.MonitorServiceException;
+import com.rosanova.iot.timer.error.Result;
+import com.rosanova.iot.timer.monitor.Monitor;
 import com.rosanova.iot.timer.monitor.repository.MonitorRepository;
 import com.rosanova.iot.timer.utils.TimerUtils;
 import lombok.RequiredArgsConstructor;
+
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 
 
 public class MonitorServiceImpl {
@@ -17,7 +23,87 @@ public class MonitorServiceImpl {
         this.monitorTurnOffUtils = monitorTurnOffUtils;
     }
 
+    public Result updateMonitorStart(int start) {
+
+        int step = 0;
 
 
+        Monitor monitor = repository.getMonitor();
 
+        if (monitor == null) throw new MonitorServiceException("Monitor is null");
+
+        if (start >= monitor.getStop()) throw new MonitorServiceException("Invalid start value");
+
+        if (start == monitor.getStart()) return Result.SUCCESS;
+
+        String prevStart = String.valueOf(monitor.getStart());
+        String nowStart = String.valueOf(start);
+        String startDate = LocalTime.ofNanoOfDay((long) start * 1000_000).format(DateTimeFormatter.ofPattern("HH:mm:ss"));
+
+        try {
+
+            repository.updateStart(monitor.getId(), start);
+
+            step++;
+
+            if (monitorTurnOnUtils.deactivateSystemdTimer(prevStart) == Result.ERROR)
+                throw new MonitorServiceException("error");
+
+
+            step++;
+
+            if (monitorTurnOnUtils.deleteSystemdTimerUnit(prevStart) == Result.ERROR)
+                throw new MonitorServiceException("error");
+
+
+            step++;
+
+            if (monitorTurnOnUtils.createSystemdTimerUnit(nowStart, startDate) == Result.ERROR)
+                throw new MonitorServiceException("error");
+
+            step++;
+
+            if (monitorTurnOnUtils.timerReload() == Result.ERROR)
+                throw new MonitorServiceException("error");
+
+            step++;
+
+            if (monitorTurnOnUtils.activateSystemdTimer(nowStart) == Result.ERROR)
+                throw new MonitorServiceException("error");
+
+            step++;
+
+
+            return Result.SUCCESS;
+
+        } catch (Exception e) {
+            System.err.println(e.getMessage());
+            throw e;
+        } finally {
+            if (step < 6) {
+                try {
+
+                    if (step >= 5 && monitorTurnOnUtils.deactivateSystemdTimer(nowStart) == Result.ERROR)
+                        throw new MonitorServiceException("error");
+
+                    if (step >= 3 && monitorTurnOnUtils.reversSystemdTimerUnitInsert(nowStart) == Result.ERROR)
+                        throw new MonitorServiceException("error");
+
+                    if (step >= 2 && monitorTurnOnUtils.reverseDeleteSystemdTimerUnit(prevStart) == Result.ERROR)
+                        throw new MonitorServiceException("error");
+
+                    if (step >= 1 && monitorTurnOnUtils.activateSystemdTimer(prevStart) == Result.ERROR)
+                        throw new MonitorServiceException("error");
+
+                    if(monitorTurnOnUtils.timerReload() == Result.ERROR)
+                        throw new MonitorServiceException("error");
+
+                } catch (Exception rollbackError) {
+                    System.err.println("ERRORE CRITICO: Fallimento durante il rollback: " + rollbackError.getMessage());
+                }
+
+            }
+
+        }
+    }
 }
