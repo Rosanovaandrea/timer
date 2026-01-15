@@ -24,7 +24,7 @@ public class TimerUtilsImpl implements TimerUtils {
     //file
     private static final String[] FILE_STATIC = {"[Unit]\nDescription=Custom Timer for ", "\n\n[Timer]\nOnCalendar= *-*-* ", "\nUnit=", "\n\n[Install]\nWantedBy=timers.target\n"};
 
-    private static final String DAEMON_RELOAD = "sudo /usr/bin/systemctl daemon-reload";
+    private static final String DAEMON_RELOAD = "sudo systemctl daemon-reload";
 
     //command
     private static final String[] COMMAND = {"sudo /usr/bin/systemctl enable ", " && sudo /usr/bin/systemctl start "};

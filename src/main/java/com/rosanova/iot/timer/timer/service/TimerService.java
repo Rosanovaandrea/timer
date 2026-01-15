@@ -7,6 +7,6 @@ import java.util.List;
 
 public interface TimerService {
     Result insertTimer(String name, int time);
-    Result removeTimer(int id);
+    Result removeTimer(long id);
     List<Timer> getAllTimers(int start);
 }

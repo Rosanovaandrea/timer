@@ -46,7 +46,7 @@ public class TimerServiceImplUnitTest {
     private final int EXPECTED_END = 600_000;
     private final int EXPECTED_PILLOW_START = 180_000; // 300k - 120k
     private final int EXPECTED_PILLOW_END = 720_000;   // 600k + 120k
-    private final String EXPECTED_CALENDAR = "00:05:00";
+    private final String EXPECTED_CALENDAR = "00:10:00";
 
     @Test
     void insertTimer_Success_ShouldExecuteEverything() {
@@ -185,7 +185,7 @@ public class TimerServiceImplUnitTest {
 
         // Con 420k: start = 120k, startPillow = 0
         verify(repository).countOverlapsAndMaxTimers(eq(0), eq(540_000));
-        verify(timerUtils).createSystemdTimerUnit(anyString(), eq("00:02:00"));
+        verify(timerUtils).createSystemdTimerUnit(anyString(), eq("00:07:00"));
     }
 
     private void setupValidDbCheck() {

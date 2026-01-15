@@ -10,12 +10,15 @@ import com.rosanova.iot.timer.utils.TimerUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
+@Service
 public class TimerServiceImpl implements TimerService {
 
     private final TimerRepository repository;
@@ -37,7 +40,16 @@ public class TimerServiceImpl implements TimerService {
         Result result = Result.SUCCESS;
         int start = time-intervalTime;
         int end = time;
-        String onCalendar = LocalTime.ofNanoOfDay((long)start * 1000_000).format(DateTimeFormatter.ofPattern("HH:mm:ss"));
+
+        Duration duration = Duration.ofMillis(time);
+
+// Trasforma in formato HH:mm:ss senza fusi orari di mezzo
+        String onCalendar = String.format("%02d:%02d:%02d",
+                duration.toHours(),
+                duration.toMinutesPart(),
+                duration.toSecondsPart());
+
+
         String nameFile = String.valueOf(time);
 
 
@@ -110,7 +122,7 @@ public class TimerServiceImpl implements TimerService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Result removeTimer(int id) {
+    public Result removeTimer(long id) {
         Result result = Result.SUCCESS;
         int step = 0;
         String filename = null;
@@ -118,7 +130,7 @@ public class TimerServiceImpl implements TimerService {
         try{
         Timer timerToDelete = repository.findById(id);
 
-        if (timerToDelete == null) throw new TimerServiceException("error");
+        if (timerToDelete == null) throw new TimerServiceException("errore timer non trovato");
 
         filename = String.valueOf(timerToDelete.getEndTime());
         repository.deleteById(id);
@@ -126,18 +138,18 @@ public class TimerServiceImpl implements TimerService {
         result = timerUtils.deactivateSystemdTimer(filename);
         step++;
 
-        if (result == Result.ERROR) throw new TimerServiceException("error");
+        if (result == Result.ERROR) throw new TimerServiceException("timer non disattivato");
 
         result = timerUtils.deleteSystemdTimerUnit(filename);
         step++;
 
-        if (result == Result.ERROR) throw new TimerServiceException("error");
+        if (result == Result.ERROR) throw new TimerServiceException("timer fisico non cancellato");
 
 
         result = timerUtils.timerReload();
 
 
-        if (result == Result.ERROR) throw new TimerServiceException("error");
+        if (result == Result.ERROR) throw new TimerServiceException("errore durante daemon-Reload");
 
         return result;
 

@@ -112,7 +112,7 @@ class TimerServiceHybridTest {
         // Arrange
         Timer t = new Timer(0, "ToRemove", 100, 500);
         repository.insert(t);
-        int id = repository.findAll().get(0).getId();
+        long id = repository.findAll().get(0).getId();
 
         // Creiamo il file reale per simulare la presenza dell'unit
         Path file = tempFolder.resolve("systemd").resolve("500.timer");

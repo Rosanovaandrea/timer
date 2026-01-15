@@ -50,7 +50,6 @@ public class TimerRepositoryImpl implements TimerRepository {
         return jdbcTemplate.query(sql, (rs, rowNum) -> mapRowToTimer(rs));
     }
 
-    @Cacheable(value = "timers", key = "#id")
     public Timer findById(long id) {
         String sql = "SELECT * FROM timer WHERE id = ?";
         List<Timer> results = jdbcTemplate.query(sql, (rs, rowNum) -> mapRowToTimer(rs), id);
@@ -89,7 +88,7 @@ public class TimerRepositoryImpl implements TimerRepository {
     // Helper per mappare l'oggetto intero
     private Timer mapRowToTimer(ResultSet rs) throws SQLException {
         Timer t = new Timer();
-        t.setId(rs.getInt("id"));
+        t.setId(rs.getLong("id"));
         t.setTimerName(rs.getString("timer_name"));
         t.setStartTime(rs.getInt("start_time"));
         t.setEndTime(rs.getInt("end_time"));

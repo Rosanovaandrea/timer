@@ -1,11 +1,9 @@
 package com.rosanova.iot.timer.user.service.impl;
 
 import com.rosanova.iot.timer.error.Result;
-import com.rosanova.iot.timer.error.UserServiceException;
 import com.rosanova.iot.timer.user.User;
 import com.rosanova.iot.timer.user.dto.LoginReturnDto;
 import com.rosanova.iot.timer.user.repository.UserRepository;
-import com.rosanova.iot.timer.user.repository.impl.UserRepositoryImpl;
 import com.rosanova.iot.timer.user.service.UserService;
 import com.rosanova.iot.timer.utils.HMACSHA256SignatureUtil;
 import lombok.RequiredArgsConstructor;
