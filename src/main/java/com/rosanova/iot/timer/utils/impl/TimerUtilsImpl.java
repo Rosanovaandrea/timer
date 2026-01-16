@@ -24,13 +24,13 @@ public class TimerUtilsImpl implements TimerUtils {
     //file
     private static final String[] FILE_STATIC = {"[Unit]\nDescription=Custom Timer for ", "\n\n[Timer]\nOnCalendar= *-*-* ", "\nUnit=", "\n\n[Install]\nWantedBy=timers.target\n"};
 
-    private static final String DAEMON_RELOAD = "sudo systemctl daemon-reload";
+    private static final String DAEMON_RELOAD = " systemctl --user daemon-reload";
 
     //command
-    private static final String[] COMMAND = {"sudo /usr/bin/systemctl enable ", " && sudo /usr/bin/systemctl start "};
+    private static final String[] COMMAND = {"/usr/bin/systemctl --user enable ", " && /usr/bin/systemctl --user start "};
 
     //deactivate-command
-    private static final String[] COMMAND_DEACTIVATION = { "sudo /usr/bin/systemctl stop ", " && sudo /usr/bin/systemctl disable "};
+    private static final String[] COMMAND_DEACTIVATION = { "/usr/bin/systemctl --user stop ", " && /usr/bin/systemctl --user disable "};
 
     //Errors
     private static final String ERROR_IO_TIMER_WRITE = "ERROR: Failed to create or move timer file";
