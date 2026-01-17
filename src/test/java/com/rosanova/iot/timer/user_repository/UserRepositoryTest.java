@@ -12,13 +12,15 @@ import org.springframework.cache.concurrent.ConcurrentMapCacheManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.context.annotation.Import;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@JdbcTest // Configura un DB in-memory e JdbcTemplate
+@JdbcTest
+@ActiveProfiles("test")// Configura un DB in-memory e JdbcTemplate
 @Import(UserRepositoryImpl.class) // Importa il repository perché @JdbcTest non scansiona i @Repository
 class UserRepositoryTest {
 

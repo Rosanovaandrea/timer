@@ -7,6 +7,7 @@ import com.rosanova.iot.timer.monitor.repository.MonitorRepository;
 import com.rosanova.iot.timer.utils.TimerUtils;
 import lombok.RequiredArgsConstructor;
 
+import java.time.Duration;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 
@@ -38,7 +39,13 @@ public class MonitorServiceImpl {
 
         String prevStart = String.valueOf(monitor.getStart());
         String nowStart = String.valueOf(start);
-        String startDate = LocalTime.ofNanoOfDay((long) start * 1000_000).format(DateTimeFormatter.ofPattern("HH:mm:ss"));
+
+        Duration duration = Duration.ofMillis(start);
+
+        String startDate = String.format("%02d:%02d:%02d",
+                duration.toHours(),
+                duration.toMinutesPart(),
+                duration.toSecondsPart());
 
         try {
 
@@ -93,6 +100,96 @@ public class MonitorServiceImpl {
                         throw new MonitorServiceException("error");
 
                     if (step >= 1 && monitorTurnOnUtils.activateSystemdTimer(prevStart) == Result.ERROR)
+                        throw new MonitorServiceException("error");
+
+                    if(monitorTurnOnUtils.timerReload() == Result.ERROR)
+                        throw new MonitorServiceException("error");
+
+                } catch (Exception rollbackError) {
+                    System.err.println("ERRORE CRITICO: Fallimento durante il rollback: " + rollbackError.getMessage());
+                }
+
+            }
+
+        }
+    }
+
+    public Result updateMonitorStop(int stop) {
+
+        int step = 0;
+
+
+        Monitor monitor = repository.getMonitor();
+
+        if (monitor == null) throw new MonitorServiceException("Monitor is null");
+
+        if (stop <= monitor.getStart()) throw new MonitorServiceException("Invalid start value");
+
+        if (stop == monitor.getStop()) return Result.SUCCESS;
+
+        String prevStop = String.valueOf(monitor.getStop());
+        String nowStop = String.valueOf(stop);
+
+        Duration duration = Duration.ofMillis(stop);
+
+        String stopDate = String.format("%02d:%02d:%02d",
+                duration.toHours(),
+                duration.toMinutesPart(),
+                duration.toSecondsPart());
+
+        try {
+
+            repository.updateStart(monitor.getId(), stop);
+
+            step++;
+
+            if (monitorTurnOnUtils.deactivateSystemdTimer(prevStop) == Result.ERROR)
+                throw new MonitorServiceException("error");
+
+
+            step++;
+
+            if (monitorTurnOnUtils.deleteSystemdTimerUnit(prevStop) == Result.ERROR)
+                throw new MonitorServiceException("error");
+
+
+            step++;
+
+            if (monitorTurnOnUtils.createSystemdTimerUnit(nowStop, stopDate) == Result.ERROR)
+                throw new MonitorServiceException("error");
+
+            step++;
+
+            if (monitorTurnOnUtils.timerReload() == Result.ERROR)
+                throw new MonitorServiceException("error");
+
+            step++;
+
+            if (monitorTurnOnUtils.activateSystemdTimer(nowStop) == Result.ERROR)
+                throw new MonitorServiceException("error");
+
+            step++;
+
+
+            return Result.SUCCESS;
+
+        } catch (Exception e) {
+            System.err.println(e.getMessage());
+            throw e;
+        } finally {
+            if (step < 6) {
+                try {
+
+                    if (step >= 5 && monitorTurnOnUtils.deactivateSystemdTimer(nowStop) == Result.ERROR)
+                        throw new MonitorServiceException("error");
+
+                    if (step >= 3 && monitorTurnOnUtils.reversSystemdTimerUnitInsert(nowStop) == Result.ERROR)
+                        throw new MonitorServiceException("error");
+
+                    if (step >= 2 && monitorTurnOnUtils.reverseDeleteSystemdTimerUnit(prevStop) == Result.ERROR)
+                        throw new MonitorServiceException("error");
+
+                    if (step >= 1 && monitorTurnOnUtils.activateSystemdTimer(prevStop) == Result.ERROR)
                         throw new MonitorServiceException("error");
 
                     if(monitorTurnOnUtils.timerReload() == Result.ERROR)
