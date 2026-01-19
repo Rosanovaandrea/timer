@@ -3,6 +3,7 @@ package com.rosanova.iot.timer.monitor;
 
 import com.rosanova.iot.timer.error.MonitorServiceException;
 import com.rosanova.iot.timer.error.Result;
+import com.rosanova.iot.timer.error.UserServiceException;
 import com.rosanova.iot.timer.monitor.repository.MonitorRepository;
 import com.rosanova.iot.timer.utils.TimerUtils;
 import jakarta.annotation.PostConstruct;
@@ -31,8 +32,15 @@ public class MonitorStartup {
     public Result createMonitor() {
 
         int step = 0;
+        Monitor monitor;
 
-        Monitor monitor = repository.getMonitor();
+        try {
+             monitor = repository.getMonitor();
+        }catch (RuntimeException e) {
+            System.err.println("ERRORE DATABASE CONTROLLO ESISTENZA MONITOR:" + e.getMessage());
+            throw new MonitorServiceException("errore startup Monitor");
+        }
+
 
         if (monitor != null) return Result.SUCCESS;
 
@@ -58,7 +66,7 @@ public class MonitorStartup {
 
         try {
 
-            repository.save(monitor);
+
 
             step++;
 
@@ -80,12 +88,16 @@ public class MonitorStartup {
             step++;
 
             if (monitorTurnOnUtils.activateSystemdTimer(startString) == Result.ERROR)
-                throw new MonitorServiceException("erroe attivazione timer start");
+                throw new MonitorServiceException("errore attivazione timer start");
 
             step++;
 
-            if (monitorTurnOnUtils.activateSystemdTimer(stopString) == Result.ERROR)
+            if (monitorTurnOffUtils.activateSystemdTimer(stopString) == Result.ERROR)
                 throw new MonitorServiceException("errore attivazione timer stop");
+
+            step++;
+
+            repository.save(monitor);
 
             step++;
 
@@ -94,9 +106,9 @@ public class MonitorStartup {
 
         } catch (Exception e) {
             System.err.println("ERRORE INIZIALIZZAZIONE MONITOR: "+e.getMessage());
-            throw e;
+            throw new MonitorServiceException("errore startup Monitor");
         } finally {
-            if (step < 6) {
+            if (step < 7) {
                 try {
 
                     if (step >= 5 && monitorTurnOffUtils.deactivateSystemdTimer(stopString)== Result.ERROR)
@@ -105,11 +117,11 @@ public class MonitorStartup {
                     if (step >= 4 && monitorTurnOnUtils.deactivateSystemdTimer(startString) == Result.ERROR)
                         throw new MonitorServiceException("errore disattivazione timer start");
 
-                    if (step >= 2 && monitorTurnOffUtils.reverseDeleteSystemdTimerUnit(stopString) == Result.ERROR)
+                    if (step >= 2 && monitorTurnOffUtils.reversSystemdTimerUnitInsert(stopString) == Result.ERROR)
                         throw new MonitorServiceException("errore cancellazione timer stop");
 
                     if (step >= 1 && monitorTurnOnUtils.reversSystemdTimerUnitInsert(startString) == Result.ERROR)
-                        throw new MonitorServiceException("error calcellazione timer start");
+                        throw new MonitorServiceException("error cancellazione timer start");
 
                     if(monitorTurnOnUtils.timerReload() == Result.ERROR)
                         throw new MonitorServiceException("error daemon reaload");
