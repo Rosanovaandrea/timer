@@ -28,12 +28,18 @@ public class MonitorServiceImpl {
 
         int step = 0;
 
+        Monitor monitor;
 
-        Monitor monitor = repository.getMonitor();
+        try{
+         monitor = repository.getMonitor();
+        }catch (Exception e) {
+            System.err.println("ERRORE DATABASE UPDATE MONITOR:" + e.getMessage());
+            throw new MonitorServiceException("ERRORE DATABASE UPDATE MONITOR");
+        }
 
-        if (monitor == null) throw new MonitorServiceException("Monitor is null");
+        if (monitor == null) throw new MonitorServiceException("Monitor è nullo");
 
-        if (start >= monitor.getStop()) throw new MonitorServiceException("Invalid start value");
+        if (start >= monitor.getStop()) throw new MonitorServiceException(" valore di start non valido");
 
         if (start == monitor.getStart()) return Result.SUCCESS;
 
@@ -49,34 +55,38 @@ public class MonitorServiceImpl {
 
         try {
 
-            repository.updateStart(monitor.getId(), start);
+
 
             step++;
 
             if (monitorTurnOnUtils.deactivateSystemdTimer(prevStart) == Result.ERROR)
-                throw new MonitorServiceException("error");
+                throw new MonitorServiceException("errore nella disattivazione del vecchio timer di accenzione");
 
 
             step++;
 
             if (monitorTurnOnUtils.deleteSystemdTimerUnit(prevStart) == Result.ERROR)
-                throw new MonitorServiceException("error");
+                throw new MonitorServiceException("errore nella cancellazione del vecchio timer di accenzione");
 
 
             step++;
 
             if (monitorTurnOnUtils.createSystemdTimerUnit(nowStart, startDate, nowStart.substring(0,nowStart.length()-3)) == Result.ERROR)
-                throw new MonitorServiceException("error");
+                throw new MonitorServiceException("errore nella creazione del nuovo timer di accenzione");
 
             step++;
 
             if (monitorTurnOnUtils.timerReload() == Result.ERROR)
-                throw new MonitorServiceException("error");
+                throw new MonitorServiceException("errore nel system reload");
 
             step++;
 
             if (monitorTurnOnUtils.activateSystemdTimer(nowStart) == Result.ERROR)
-                throw new MonitorServiceException("error");
+                throw new MonitorServiceException("errore nell' attivazione del nuovo timer");
+
+            step++;
+
+            repository.updateStart(monitor.getId(), start);
 
             step++;
 
@@ -85,25 +95,25 @@ public class MonitorServiceImpl {
 
         } catch (Exception e) {
             System.err.println(e.getMessage());
-            throw e;
+            throw new MonitorServiceException("errore nel servizio di inserimento start monitor");
         } finally {
-            if (step < 6) {
+            if (step < 7) {
                 try {
 
                     if (step >= 5 && monitorTurnOnUtils.deactivateSystemdTimer(nowStart) == Result.ERROR)
-                        throw new MonitorServiceException("error");
+                        throw new MonitorServiceException("disattivazione nuovo timer");
 
                     if (step >= 3 && monitorTurnOnUtils.reversSystemdTimerUnitInsert(nowStart) == Result.ERROR)
-                        throw new MonitorServiceException("error");
+                        throw new MonitorServiceException("cancellazione nuovo timer");
 
                     if (step >= 2 && monitorTurnOnUtils.reverseDeleteSystemdTimerUnit(prevStart) == Result.ERROR)
-                        throw new MonitorServiceException("error");
+                        throw new MonitorServiceException("errore ripristino vecchio timer");
 
                     if (step >= 1 && monitorTurnOnUtils.activateSystemdTimer(prevStart) == Result.ERROR)
-                        throw new MonitorServiceException("error");
+                        throw new MonitorServiceException("errore riattivazione vecchio timer");
 
                     if(monitorTurnOnUtils.timerReload() == Result.ERROR)
-                        throw new MonitorServiceException("error");
+                        throw new MonitorServiceException("errore rimer reload");
 
                 } catch (Exception rollbackError) {
                     System.err.println("ERRORE CRITICO: Fallimento durante il rollback: " + rollbackError.getMessage());
@@ -118,12 +128,19 @@ public class MonitorServiceImpl {
 
         int step = 0;
 
+        Monitor monitor;
 
-        Monitor monitor = repository.getMonitor();
 
-        if (monitor == null) throw new MonitorServiceException("Monitor is null");
+        try{
+            monitor = repository.getMonitor();
+        }catch (Exception e) {
+            System.err.println("ERRORE DATABASE UPDATE MONITOR:" + e.getMessage());
+            throw new MonitorServiceException("ERRORE DATABASE UPDATE MONITOR");
+        }
 
-        if (stop <= monitor.getStart()) throw new MonitorServiceException("Invalid start value");
+        if (monitor == null) throw new MonitorServiceException("Monitor è null");
+
+        if (stop <= monitor.getStart()) throw new MonitorServiceException("valore di stop non valido");
 
         if (stop == monitor.getStop()) return Result.SUCCESS;
 
@@ -139,34 +156,38 @@ public class MonitorServiceImpl {
 
         try {
 
-            repository.updateStart(monitor.getId(), stop);
+
 
             step++;
 
-            if (monitorTurnOnUtils.deactivateSystemdTimer(prevStop) == Result.ERROR)
+            if (monitorTurnOffUtils.deactivateSystemdTimer(prevStop) == Result.ERROR)
                 throw new MonitorServiceException("error");
 
 
             step++;
 
-            if (monitorTurnOnUtils.deleteSystemdTimerUnit(prevStop) == Result.ERROR)
+            if (monitorTurnOffUtils.deleteSystemdTimerUnit(prevStop) == Result.ERROR)
                 throw new MonitorServiceException("error");
 
 
             step++;
 
-            if (monitorTurnOnUtils.createSystemdTimerUnit(nowStop, stopDate,nowStop.substring(0,nowStop.length()-3)) == Result.ERROR)
+            if (monitorTurnOffUtils.createSystemdTimerUnit(nowStop, stopDate,nowStop.substring(0,nowStop.length()-3)) == Result.ERROR)
                 throw new MonitorServiceException("error");
 
             step++;
 
-            if (monitorTurnOnUtils.timerReload() == Result.ERROR)
+            if (monitorTurnOffUtils.timerReload() == Result.ERROR)
                 throw new MonitorServiceException("error");
 
             step++;
 
-            if (monitorTurnOnUtils.activateSystemdTimer(nowStop) == Result.ERROR)
+            if (monitorTurnOffUtils.activateSystemdTimer(nowStop) == Result.ERROR)
                 throw new MonitorServiceException("error");
+
+            step++;
+
+            repository.updateStop(monitor.getId(), stop);
 
             step++;
 
@@ -175,24 +196,24 @@ public class MonitorServiceImpl {
 
         } catch (Exception e) {
             System.err.println(e.getMessage());
-            throw e;
+            throw new MonitorServiceException("errore nel servizio di inserimento stop monitor");
         } finally {
-            if (step < 6) {
+            if (step < 7) {
                 try {
 
-                    if (step >= 5 && monitorTurnOnUtils.deactivateSystemdTimer(nowStop) == Result.ERROR)
+                    if (step >= 5 && monitorTurnOffUtils.deactivateSystemdTimer(nowStop) == Result.ERROR)
                         throw new MonitorServiceException("error");
 
-                    if (step >= 3 && monitorTurnOnUtils.reversSystemdTimerUnitInsert(nowStop) == Result.ERROR)
+                    if (step >= 3 && monitorTurnOffUtils.reversSystemdTimerUnitInsert(nowStop) == Result.ERROR)
                         throw new MonitorServiceException("error");
 
-                    if (step >= 2 && monitorTurnOnUtils.reverseDeleteSystemdTimerUnit(prevStop) == Result.ERROR)
+                    if (step >= 2 && monitorTurnOffUtils.reverseDeleteSystemdTimerUnit(prevStop) == Result.ERROR)
                         throw new MonitorServiceException("error");
 
-                    if (step >= 1 && monitorTurnOnUtils.activateSystemdTimer(prevStop) == Result.ERROR)
+                    if (step >= 1 && monitorTurnOffUtils.activateSystemdTimer(prevStop) == Result.ERROR)
                         throw new MonitorServiceException("error");
 
-                    if(monitorTurnOnUtils.timerReload() == Result.ERROR)
+                    if(monitorTurnOffUtils.timerReload() == Result.ERROR)
                         throw new MonitorServiceException("error");
 
                 } catch (Exception rollbackError) {
