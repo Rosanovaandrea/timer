@@ -70,13 +70,13 @@ public class MonitorStartup {
 
             step++;
 
-            if (monitorTurnOnUtils.createSystemdTimerUnit(startString,startDate) == Result.ERROR)
+            if (monitorTurnOnUtils.createSystemdTimerUnit(startString,startDate,startString.substring(0,startString.length()-3)) == Result.ERROR)
                 throw new MonitorServiceException("errore creazione timer start");
 
 
             step++;
 
-            if (monitorTurnOffUtils.createSystemdTimerUnit(stopString,stopDate) == Result.ERROR)
+            if (monitorTurnOffUtils.createSystemdTimerUnit(stopString,stopDate,stopString.substring(0,stopString.length()-3)) == Result.ERROR)
                 throw new MonitorServiceException("errore creazione timer stop");
 
 

@@ -65,7 +65,7 @@ public class MonitorServiceImpl {
 
             step++;
 
-            if (monitorTurnOnUtils.createSystemdTimerUnit(nowStart, startDate) == Result.ERROR)
+            if (monitorTurnOnUtils.createSystemdTimerUnit(nowStart, startDate, nowStart.substring(0,nowStart.length()-3)) == Result.ERROR)
                 throw new MonitorServiceException("error");
 
             step++;
@@ -155,7 +155,7 @@ public class MonitorServiceImpl {
 
             step++;
 
-            if (monitorTurnOnUtils.createSystemdTimerUnit(nowStop, stopDate) == Result.ERROR)
+            if (monitorTurnOnUtils.createSystemdTimerUnit(nowStop, stopDate,nowStop.substring(0,nowStop.length()-3)) == Result.ERROR)
                 throw new MonitorServiceException("error");
 
             step++;

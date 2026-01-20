@@ -20,7 +20,7 @@ class TimerUtilsImplUnitTest {
 
     final String TMP_DIR = "tmpDir";
     final String SYSTEM_DIR = "systemDir";
-    final String SERVICE_FILE_NAME = "alarm.service";
+    final String SERVICE_FILE_NAME = "alarm";
     private static final String DAEMON_RELOAD = "/usr/bin/systemctl --user daemon-reload";
     final String[] FILE_STATIC = {"[Unit]\nDescription=Custom Timer for ", "\n\n[Timer]\nOnCalendar= *-*-* ", "\nUnit=", "\n\n[Install]\nWantedBy=timers.target\n"};
 
@@ -32,7 +32,7 @@ class TimerUtilsImplUnitTest {
 
     @Test
     void createTimerTest() {
-        String timerName ="123";
+        String timerName ="123000";
         Path tmpTargetFile = Paths.get(TMP_DIR).resolve(timerName+".timer");
         Path targetTimerFile = Paths.get(SYSTEM_DIR).resolve(timerName+".timer");
 
@@ -40,9 +40,9 @@ class TimerUtilsImplUnitTest {
         doReturn(Result.SUCCESS).when(timerUtilsImpl).moveTimer(Mockito.any(),Mockito.any());
 
         String onCalendar = "10:00:00";
-        String tempFile = FILE_STATIC[0]+SERVICE_FILE_NAME+FILE_STATIC[1]+onCalendar+FILE_STATIC[2]+SERVICE_FILE_NAME+ FILE_STATIC[3];
+        String tempFile = FILE_STATIC[0]+SERVICE_FILE_NAME+"@"+timerName.substring(0,timerName.length()-3)+".service"+FILE_STATIC[1]+onCalendar+FILE_STATIC[2]+SERVICE_FILE_NAME+"@"+timerName.substring(0,timerName.length()-3)+".service"+ FILE_STATIC[3];
 
-        timerUtilsImpl.createSystemdTimerUnit(timerName,onCalendar);
+        timerUtilsImpl.createSystemdTimerUnit(timerName,onCalendar,timerName.substring(0,timerName.length()-3));
 
         verify(timerUtilsImpl).writeTimer(Mockito.eq(tmpTargetFile),Mockito.eq(tempFile));
         verify(timerUtilsImpl).moveTimer(Mockito.eq(tmpTargetFile),Mockito.eq(targetTimerFile));
@@ -50,16 +50,16 @@ class TimerUtilsImplUnitTest {
 
     @Test
     void createTimerErrorWriteTest() {
-        String timerName ="123";
+        String timerName ="123000";
         Path tmpTargetFile = Paths.get(TMP_DIR).resolve(timerName+".timer");
         Path targetTimerFile = Paths.get(SYSTEM_DIR).resolve(timerName+".timer");
 
         doReturn(Result.ERROR).when(timerUtilsImpl).writeTimer( Mockito.any(),Mockito.any());
 
         String onCalendar = "10:00:00";
-        String tempFile = FILE_STATIC[0]+SERVICE_FILE_NAME+FILE_STATIC[1]+onCalendar+FILE_STATIC[2]+SERVICE_FILE_NAME+ FILE_STATIC[3];
+        String tempFile = FILE_STATIC[0]+SERVICE_FILE_NAME+"@"+timerName.substring(0,timerName.length()-3)+".service"+FILE_STATIC[1]+onCalendar+FILE_STATIC[2]+SERVICE_FILE_NAME+"@"+timerName.substring(0,timerName.length()-3)+".service"+ FILE_STATIC[3];
 
-        Assertions.assertEquals(Result.ERROR, timerUtilsImpl.createSystemdTimerUnit(timerName,onCalendar));
+        Assertions.assertEquals(Result.ERROR, timerUtilsImpl.createSystemdTimerUnit(timerName,onCalendar,"123"));
 
         verify(timerUtilsImpl).writeTimer(Mockito.eq(tmpTargetFile),Mockito.eq(tempFile));
         verify(timerUtilsImpl,Mockito.times(0)).moveTimer(Mockito.any(),Mockito.any());
@@ -67,7 +67,7 @@ class TimerUtilsImplUnitTest {
 
     @Test
     void createTimerErrorMoveTest() {
-        String timerName ="123";
+        String timerName ="123000";
         Path tmpTargetFile = Paths.get(TMP_DIR).resolve(timerName+".timer");
         Path targetTimerFile = Paths.get(SYSTEM_DIR).resolve(timerName+".timer");
 
@@ -75,9 +75,9 @@ class TimerUtilsImplUnitTest {
         doReturn(Result.ERROR).when(timerUtilsImpl).moveTimer(Mockito.any(),Mockito.any());
 
         String onCalendar = "10:00:00";
-        String tempFile = FILE_STATIC[0]+SERVICE_FILE_NAME+FILE_STATIC[1]+onCalendar+FILE_STATIC[2]+SERVICE_FILE_NAME+ FILE_STATIC[3];
+        String tempFile = FILE_STATIC[0]+SERVICE_FILE_NAME+"@"+timerName.substring(0,timerName.length()-3)+".service"+FILE_STATIC[1]+onCalendar+FILE_STATIC[2]+SERVICE_FILE_NAME+"@"+timerName.substring(0,timerName.length()-3)+".service"+ FILE_STATIC[3];
 
-        Assertions.assertEquals(Result.ERROR, timerUtilsImpl.createSystemdTimerUnit(timerName,onCalendar));
+        Assertions.assertEquals(Result.ERROR, timerUtilsImpl.createSystemdTimerUnit(timerName,onCalendar,timerName.substring(0,timerName.length()-3)));
 
         verify(timerUtilsImpl).writeTimer(Mockito.eq(tmpTargetFile),Mockito.eq(tempFile));
         verify(timerUtilsImpl).moveTimer(Mockito.eq(tmpTargetFile),Mockito.eq(targetTimerFile));

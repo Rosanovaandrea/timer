@@ -22,7 +22,7 @@ public class TimerUtilsImpl implements TimerUtils {
     private static final String[] COMMAND_PREFIX = {"/bin/sh", "-c"};
 
     //file
-    private static final String[] FILE_STATIC = {"[Unit]\nDescription=Custom Timer for ", "\n\n[Timer]\nOnCalendar= *-*-* ", "\nUnit=", "\n\n[Install]\nWantedBy=timers.target\n"};
+    private static final String[] FILE_STATIC = {"[Unit]\nDescription=Custom Timer for ", "\n\n[Timer]\nOnCalendar= *-*-* ","\nPersistent=true\nUnit=", "\nUnit=", "\n\n[Install]\nWantedBy=timers.target\n"};
 
     private static final String DAEMON_RELOAD = " systemctl --user daemon-reload";
 
@@ -31,6 +31,8 @@ public class TimerUtilsImpl implements TimerUtils {
 
     //deactivate-command
     private static final String[] COMMAND_DEACTIVATION = { "/usr/bin/systemctl --user stop ", " && /usr/bin/systemctl --user disable "};
+
+    private static final String SERVICE = ".service";
 
     //Errors
     private static final String ERROR_IO_TIMER_WRITE = "ERROR: Failed to create or move timer file";
@@ -44,6 +46,8 @@ public class TimerUtilsImpl implements TimerUtils {
 
     private final String serviceFileName;
 
+    private final int activeOnStartup;
+
     /**
      * @param systemdTimerDir directory di sistema per i file .timer, esempio: /etc/systemd/system/
      * @param serviceFileName nome del service da far partire con il timer, compreso di estensione .service
@@ -53,6 +57,18 @@ public class TimerUtilsImpl implements TimerUtils {
             tempDir = Paths.get(tmpDir);
             targetDir = Paths.get(systemdTimerDir);
             this.serviceFileName = serviceFileName;
+            this.activeOnStartup = 3;
+
+
+    }
+
+    public TimerUtilsImpl(@Value("${tmp.directory}" )String tmpDir,@Value("${systemd.directory}" )String systemdTimerDir, @Value("${systemd.service.name}") String serviceFileName,boolean activeOnStartup){
+        tempDir = Paths.get(tmpDir);
+        targetDir = Paths.get(systemdTimerDir);
+        this.serviceFileName = serviceFileName;
+        this.activeOnStartup = activeOnStartup ? 2 : 3;
+
+
     }
 
     /**
@@ -62,22 +78,28 @@ public class TimerUtilsImpl implements TimerUtils {
      * @param onCalendar L'orario di esecuzione configurabile.
      * @return Codice di stato: 0 (SUCCESS), 1 (ERROR).
      */
-    public Result createSystemdTimerUnit(String timerBaseName, String onCalendar) {
+    public Result createSystemdTimerUnit(String timerBaseName, String onCalendar, String parameter) {
 
         String fullTimerName = timerBaseName + TIMER_FILE_EXTENSION;
 
         StringBuilder timerContent = new StringBuilder(150);
 
-        timerContent.append(FILE_STATIC[0]).append(serviceFileName)
+        StringBuilder service = new StringBuilder(3);
+
+        service.append(serviceFileName).append('@')
+                .append(parameter)
+                .append(SERVICE);
+
+        timerContent.append(FILE_STATIC[0]).append(service)
                 .append(FILE_STATIC[1]).append(onCalendar)
-                .append(FILE_STATIC[2]).append(serviceFileName)
-                .append(FILE_STATIC[3]);
+                .append(FILE_STATIC[activeOnStartup]).append(service)
+                .append(FILE_STATIC[4]);
 
 
             Path tempTimerFile = tempDir.resolve(fullTimerName);
             Path targetTimerFile = targetDir.resolve(fullTimerName);
 
-            if(writeTimer(tempTimerFile,timerContent.toString()) != Result.SUCCESS) {
+             if(writeTimer(tempTimerFile,timerContent.toString()) != Result.SUCCESS) {
                 return Result.ERROR;
             }
 

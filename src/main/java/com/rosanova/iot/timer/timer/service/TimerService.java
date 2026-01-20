@@ -6,7 +6,7 @@ import com.rosanova.iot.timer.timer.Timer;
 import java.util.List;
 
 public interface TimerService {
-    Result insertTimer(String name, int time);
+    public Result insertTimer(String name, int time, int symphony);
     Result removeTimer(long id);
     List<Timer> getAllTimers(int start);
 }

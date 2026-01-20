@@ -29,6 +29,15 @@ class MonitorStartupUnitTest {
 
     MonitorStartup monitorStartup;
 
+    int start = 8 * 60 * 60 * 1000;
+    int stop = 20 * 60 * 60 * 1000;
+    String literalStart = "08:00:00";
+    String literalStop = "20:00:00";
+    String startString = String.valueOf(start);
+    String stopString = String.valueOf(stop);
+    String startStringSecond = startString.substring(0,startString.length()-3);
+    String stopStringSecond = stopString.substring(0,stopString.length()-3);
+
     @BeforeEach
     void setUp() {
         monitorStartup = new MonitorStartup(repository,monitorTurnOnUtils, monitorTurnOffUtils);
@@ -37,16 +46,12 @@ class MonitorStartupUnitTest {
     @Test
     void createMonitorAllRight() {
 
-        int start = 8 * 60 * 60 * 1000;
-        int stop = 20 * 60 * 60 * 1000;
-        String literalStart = "08:00:00";
-        String literalStop = "20:00:00";
 
         ArgumentCaptor<Monitor> captor = ArgumentCaptor.forClass(Monitor.class);
 
         Mockito.doReturn(null).when(repository).getMonitor();
-        Mockito.doReturn(Result.SUCCESS).when(monitorTurnOnUtils).createSystemdTimerUnit(Mockito.anyString(),Mockito.anyString());
-        Mockito.doReturn(Result.SUCCESS).when(monitorTurnOffUtils).createSystemdTimerUnit(Mockito.anyString(),Mockito.anyString());
+        Mockito.doReturn(Result.SUCCESS).when(monitorTurnOnUtils).createSystemdTimerUnit(Mockito.anyString(),Mockito.anyString(),Mockito.anyString());
+        Mockito.doReturn(Result.SUCCESS).when(monitorTurnOffUtils).createSystemdTimerUnit(Mockito.anyString(),Mockito.anyString(),Mockito.anyString());
         Mockito.doReturn(Result.SUCCESS).when(monitorTurnOnUtils).timerReload();
         Mockito.doReturn(Result.SUCCESS).when(monitorTurnOnUtils).activateSystemdTimer(Mockito.anyString());
         Mockito.doReturn(Result.SUCCESS).when(monitorTurnOffUtils).activateSystemdTimer(Mockito.anyString());
@@ -54,8 +59,8 @@ class MonitorStartupUnitTest {
 
         Assertions.assertEquals(Result.SUCCESS,monitorStartup.createMonitor());
 
-        Mockito.verify(monitorTurnOnUtils).createSystemdTimerUnit(Mockito.eq(String.valueOf(start)),Mockito.eq(literalStart));
-        Mockito.verify(monitorTurnOffUtils).createSystemdTimerUnit(Mockito.eq(String.valueOf(stop)),Mockito.eq(literalStop));
+        Mockito.verify(monitorTurnOnUtils).createSystemdTimerUnit(Mockito.eq(startString),Mockito.eq(literalStart),Mockito.eq(startStringSecond));
+        Mockito.verify(monitorTurnOffUtils).createSystemdTimerUnit(Mockito.eq(stopString),Mockito.eq(literalStop),Mockito.eq(stopStringSecond));
         Mockito.verify(monitorTurnOnUtils).timerReload();
         Mockito.verify(monitorTurnOnUtils).activateSystemdTimer(Mockito.eq(String.valueOf(start)));
         Mockito.verify(monitorTurnOffUtils).activateSystemdTimer(Mockito.eq(String.valueOf(stop)));
@@ -81,8 +86,8 @@ class MonitorStartupUnitTest {
 
         Assertions.assertEquals(Result.SUCCESS,monitorStartup.createMonitor());
 
-        Mockito.verify(monitorTurnOnUtils,Mockito.times(0)).createSystemdTimerUnit(Mockito.any(),Mockito.any());
-        Mockito.verify(monitorTurnOffUtils,Mockito.times(0)).createSystemdTimerUnit(Mockito.any(),Mockito.any());
+        Mockito.verify(monitorTurnOnUtils,Mockito.times(0)).createSystemdTimerUnit(Mockito.any(),Mockito.any(),Mockito.any());
+        Mockito.verify(monitorTurnOffUtils,Mockito.times(0)).createSystemdTimerUnit(Mockito.any(),Mockito.any(),Mockito.any());
         Mockito.verify(monitorTurnOnUtils,Mockito.times(0)).timerReload();
         Mockito.verify(monitorTurnOnUtils,Mockito.times(0)).activateSystemdTimer(Mockito.any());
         Mockito.verify(monitorTurnOffUtils,Mockito.times(0)).activateSystemdTimer(Mockito.any());
@@ -103,12 +108,12 @@ class MonitorStartupUnitTest {
         String literalStop = "20:00:00";
 
         Mockito.doReturn(null).when(repository).getMonitor();
-        Mockito.doReturn(Result.ERROR).when(monitorTurnOnUtils).createSystemdTimerUnit(Mockito.anyString(),Mockito.anyString());
+        Mockito.doReturn(Result.ERROR).when(monitorTurnOnUtils).createSystemdTimerUnit(Mockito.anyString(),Mockito.anyString(),Mockito.any());
 
         Assertions.assertThrows(MonitorServiceException.class,()->{monitorStartup.createMonitor();});
 
-        Mockito.verify(monitorTurnOnUtils).createSystemdTimerUnit(Mockito.eq(String.valueOf(start)),Mockito.eq(literalStart));
-        Mockito.verify(monitorTurnOffUtils,Mockito.times(0)).createSystemdTimerUnit(Mockito.eq(String.valueOf(stop)),Mockito.eq(literalStop));
+        Mockito.verify(monitorTurnOnUtils).createSystemdTimerUnit(Mockito.eq(startString),Mockito.eq(literalStart),Mockito.eq(startStringSecond));
+        Mockito.verify(monitorTurnOffUtils,Mockito.times(0)).createSystemdTimerUnit(Mockito.eq(stopString),Mockito.eq(literalStop),Mockito.eq(stopStringSecond));
         Mockito.verify(monitorTurnOnUtils,Mockito.times(1)).timerReload();
         Mockito.verify(monitorTurnOnUtils,Mockito.times(0)).activateSystemdTimer(Mockito.eq(String.valueOf(start)));
         Mockito.verify(monitorTurnOffUtils,Mockito.times(0)).activateSystemdTimer(Mockito.eq(String.valueOf(stop)));
@@ -129,13 +134,13 @@ class MonitorStartupUnitTest {
         String literalStop = "20:00:00";
 
         Mockito.doReturn(null).when(repository).getMonitor();
-        Mockito.doReturn(Result.SUCCESS).when(monitorTurnOnUtils).createSystemdTimerUnit(Mockito.anyString(),Mockito.anyString());
-        Mockito.doReturn(Result.ERROR).when(monitorTurnOffUtils).createSystemdTimerUnit(Mockito.anyString(),Mockito.anyString());
+        Mockito.doReturn(Result.SUCCESS).when(monitorTurnOnUtils).createSystemdTimerUnit(Mockito.anyString(),Mockito.anyString(),Mockito.anyString());
+        Mockito.doReturn(Result.ERROR).when(monitorTurnOffUtils).createSystemdTimerUnit(Mockito.anyString(),Mockito.anyString(),Mockito.anyString());
 
         Assertions.assertThrows(MonitorServiceException.class,()->{monitorStartup.createMonitor();});
 
-        Mockito.verify(monitorTurnOnUtils).createSystemdTimerUnit(Mockito.eq(String.valueOf(start)),Mockito.eq(literalStart));
-        Mockito.verify(monitorTurnOffUtils,Mockito.times(1)).createSystemdTimerUnit(Mockito.eq(String.valueOf(stop)),Mockito.eq(literalStop));
+        Mockito.verify(monitorTurnOnUtils).createSystemdTimerUnit(Mockito.eq(startString),Mockito.eq(literalStart),Mockito.eq(startStringSecond));
+        Mockito.verify(monitorTurnOffUtils,Mockito.times(1)).createSystemdTimerUnit(Mockito.eq(stopString),Mockito.eq(literalStop),Mockito.eq(stopStringSecond));
         Mockito.verify(monitorTurnOnUtils,Mockito.times(1)).timerReload();
         Mockito.verify(monitorTurnOnUtils,Mockito.times(0)).activateSystemdTimer(Mockito.eq(String.valueOf(start)));
         Mockito.verify(monitorTurnOffUtils,Mockito.times(0)).activateSystemdTimer(Mockito.eq(String.valueOf(stop)));
@@ -157,14 +162,14 @@ class MonitorStartupUnitTest {
         String literalStop = "20:00:00";
 
         Mockito.doReturn(null).when(repository).getMonitor();
-        Mockito.doReturn(Result.SUCCESS).when(monitorTurnOnUtils).createSystemdTimerUnit(Mockito.anyString(),Mockito.anyString());
-        Mockito.doReturn(Result.SUCCESS).when(monitorTurnOffUtils).createSystemdTimerUnit(Mockito.anyString(),Mockito.anyString());
+        Mockito.doReturn(Result.SUCCESS).when(monitorTurnOnUtils).createSystemdTimerUnit(Mockito.anyString(),Mockito.anyString(),Mockito.any());
+        Mockito.doReturn(Result.SUCCESS).when(monitorTurnOffUtils).createSystemdTimerUnit(Mockito.anyString(),Mockito.anyString(),Mockito.any());
         Mockito.doReturn(Result.ERROR).when(monitorTurnOnUtils).timerReload();
 
         Assertions.assertThrows(MonitorServiceException.class,()->{monitorStartup.createMonitor();});
 
-        Mockito.verify(monitorTurnOnUtils).createSystemdTimerUnit(Mockito.eq(String.valueOf(start)),Mockito.eq(literalStart));
-        Mockito.verify(monitorTurnOffUtils,Mockito.times(1)).createSystemdTimerUnit(Mockito.eq(String.valueOf(stop)),Mockito.eq(literalStop));
+        Mockito.verify(monitorTurnOnUtils).createSystemdTimerUnit(Mockito.eq(startString),Mockito.eq(literalStart),Mockito.eq(startStringSecond));
+        Mockito.verify(monitorTurnOffUtils).createSystemdTimerUnit(Mockito.eq(stopString),Mockito.eq(literalStop),Mockito.eq(stopStringSecond));
         Mockito.verify(monitorTurnOnUtils,Mockito.times(2)).timerReload();
         Mockito.verify(monitorTurnOnUtils,Mockito.times(0)).activateSystemdTimer(Mockito.eq(String.valueOf(start)));
         Mockito.verify(monitorTurnOffUtils,Mockito.times(0)).activateSystemdTimer(Mockito.eq(String.valueOf(stop)));
@@ -185,16 +190,16 @@ class MonitorStartupUnitTest {
         String literalStop = "20:00:00";
 
         Mockito.doReturn(null).when(repository).getMonitor();
-        Mockito.doReturn(Result.SUCCESS).when(monitorTurnOnUtils).createSystemdTimerUnit(Mockito.anyString(),Mockito.anyString());
-        Mockito.doReturn(Result.SUCCESS).when(monitorTurnOffUtils).createSystemdTimerUnit(Mockito.anyString(),Mockito.anyString());
+        Mockito.doReturn(Result.SUCCESS).when(monitorTurnOnUtils).createSystemdTimerUnit(Mockito.anyString(),Mockito.anyString(),Mockito.any());
+        Mockito.doReturn(Result.SUCCESS).when(monitorTurnOffUtils).createSystemdTimerUnit(Mockito.anyString(),Mockito.anyString(),Mockito.any());
         Mockito.doReturn(Result.SUCCESS).when(monitorTurnOnUtils).timerReload();
         Mockito.doReturn(Result.ERROR).when(monitorTurnOnUtils).activateSystemdTimer(Mockito.anyString());
 
 
         Assertions.assertThrows(MonitorServiceException.class,()->{monitorStartup.createMonitor();});
 
-        Mockito.verify(monitorTurnOnUtils).createSystemdTimerUnit(Mockito.eq(String.valueOf(start)),Mockito.eq(literalStart));
-        Mockito.verify(monitorTurnOffUtils,Mockito.times(1)).createSystemdTimerUnit(Mockito.eq(String.valueOf(stop)),Mockito.eq(literalStop));
+        Mockito.verify(monitorTurnOnUtils).createSystemdTimerUnit(Mockito.eq(startString),Mockito.eq(literalStart),Mockito.eq(startStringSecond));
+        Mockito.verify(monitorTurnOffUtils).createSystemdTimerUnit(Mockito.eq(stopString),Mockito.eq(literalStop),Mockito.eq(stopStringSecond));
         Mockito.verify(monitorTurnOnUtils,Mockito.times(2)).timerReload();
         Mockito.verify(monitorTurnOnUtils,Mockito.times(1)).activateSystemdTimer(Mockito.eq(String.valueOf(start)));
         Mockito.verify(monitorTurnOffUtils,Mockito.times(0)).activateSystemdTimer(Mockito.eq(String.valueOf(stop)));
@@ -215,8 +220,8 @@ class MonitorStartupUnitTest {
         String literalStop = "20:00:00";
 
         Mockito.doReturn(null).when(repository).getMonitor();
-        Mockito.doReturn(Result.SUCCESS).when(monitorTurnOnUtils).createSystemdTimerUnit(Mockito.anyString(),Mockito.anyString());
-        Mockito.doReturn(Result.SUCCESS).when(monitorTurnOffUtils).createSystemdTimerUnit(Mockito.anyString(),Mockito.anyString());
+        Mockito.doReturn(Result.SUCCESS).when(monitorTurnOnUtils).createSystemdTimerUnit(Mockito.anyString(),Mockito.anyString(),Mockito.anyString());
+        Mockito.doReturn(Result.SUCCESS).when(monitorTurnOffUtils).createSystemdTimerUnit(Mockito.anyString(),Mockito.anyString(),Mockito.anyString());
         Mockito.doReturn(Result.SUCCESS).when(monitorTurnOnUtils).timerReload();
         Mockito.doReturn(Result.SUCCESS).when(monitorTurnOnUtils).activateSystemdTimer(Mockito.anyString());
         Mockito.doReturn(Result.ERROR).when(monitorTurnOffUtils).activateSystemdTimer(Mockito.anyString());
@@ -224,8 +229,8 @@ class MonitorStartupUnitTest {
 
         Assertions.assertThrows(MonitorServiceException.class,()->{monitorStartup.createMonitor();});
 
-        Mockito.verify(monitorTurnOnUtils).createSystemdTimerUnit(Mockito.eq(String.valueOf(start)),Mockito.eq(literalStart));
-        Mockito.verify(monitorTurnOffUtils,Mockito.times(1)).createSystemdTimerUnit(Mockito.eq(String.valueOf(stop)),Mockito.eq(literalStop));
+        Mockito.verify(monitorTurnOnUtils).createSystemdTimerUnit(Mockito.eq(startString),Mockito.eq(literalStart),Mockito.eq(startStringSecond));
+        Mockito.verify(monitorTurnOffUtils).createSystemdTimerUnit(Mockito.eq(stopString),Mockito.eq(literalStop),Mockito.eq(stopStringSecond));
         Mockito.verify(monitorTurnOnUtils,Mockito.times(2)).timerReload();
         Mockito.verify(monitorTurnOnUtils,Mockito.times(1)).activateSystemdTimer(Mockito.eq(String.valueOf(start)));
         Mockito.verify(monitorTurnOffUtils,Mockito.times(1)).activateSystemdTimer(Mockito.eq(String.valueOf(stop)));
@@ -246,8 +251,8 @@ class MonitorStartupUnitTest {
         String literalStop = "20:00:00";
 
         Mockito.doReturn(null).when(repository).getMonitor();
-        Mockito.doReturn(Result.SUCCESS).when(monitorTurnOnUtils).createSystemdTimerUnit(Mockito.anyString(),Mockito.anyString());
-        Mockito.doReturn(Result.SUCCESS).when(monitorTurnOffUtils).createSystemdTimerUnit(Mockito.anyString(),Mockito.anyString());
+        Mockito.doReturn(Result.SUCCESS).when(monitorTurnOnUtils).createSystemdTimerUnit(Mockito.anyString(),Mockito.anyString(),Mockito.any());
+        Mockito.doReturn(Result.SUCCESS).when(monitorTurnOffUtils).createSystemdTimerUnit(Mockito.anyString(),Mockito.anyString(),Mockito.any());
         Mockito.doReturn(Result.SUCCESS).when(monitorTurnOnUtils).timerReload();
         Mockito.doReturn(Result.SUCCESS).when(monitorTurnOnUtils).activateSystemdTimer(Mockito.anyString());
         Mockito.doReturn(Result.SUCCESS).when(monitorTurnOffUtils).activateSystemdTimer(Mockito.anyString());
@@ -255,8 +260,8 @@ class MonitorStartupUnitTest {
 
         Assertions.assertThrows(MonitorServiceException.class,()->{monitorStartup.createMonitor();});
 
-        Mockito.verify(monitorTurnOnUtils).createSystemdTimerUnit(Mockito.eq(String.valueOf(start)),Mockito.eq(literalStart));
-        Mockito.verify(monitorTurnOffUtils,Mockito.times(1)).createSystemdTimerUnit(Mockito.eq(String.valueOf(stop)),Mockito.eq(literalStop));
+        Mockito.verify(monitorTurnOnUtils).createSystemdTimerUnit(Mockito.eq(startString),Mockito.eq(literalStart),Mockito.eq(startStringSecond));
+        Mockito.verify(monitorTurnOffUtils).createSystemdTimerUnit(Mockito.eq(stopString),Mockito.eq(literalStop),Mockito.eq(stopStringSecond));
         Mockito.verify(monitorTurnOnUtils,Mockito.times(2)).timerReload();
         Mockito.verify(monitorTurnOnUtils,Mockito.times(1)).activateSystemdTimer(Mockito.eq(String.valueOf(start)));
         Mockito.verify(monitorTurnOffUtils,Mockito.times(1)).activateSystemdTimer(Mockito.eq(String.valueOf(stop)));
@@ -278,8 +283,8 @@ class MonitorStartupUnitTest {
         String literalStop = "20:00:00";
 
         Mockito.doReturn(null).when(repository).getMonitor();
-        Mockito.doReturn(Result.SUCCESS).when(monitorTurnOnUtils).createSystemdTimerUnit(Mockito.anyString(),Mockito.anyString());
-        Mockito.doReturn(Result.SUCCESS).when(monitorTurnOffUtils).createSystemdTimerUnit(Mockito.anyString(),Mockito.anyString());
+        Mockito.doReturn(Result.SUCCESS).when(monitorTurnOnUtils).createSystemdTimerUnit(Mockito.anyString(),Mockito.anyString(),Mockito.anyString());
+        Mockito.doReturn(Result.SUCCESS).when(monitorTurnOffUtils).createSystemdTimerUnit(Mockito.anyString(),Mockito.anyString(),Mockito.anyString());
         Mockito.doReturn(Result.SUCCESS).when(monitorTurnOnUtils).timerReload();
         Mockito.doReturn(Result.SUCCESS).when(monitorTurnOnUtils).activateSystemdTimer(Mockito.anyString());
         Mockito.doReturn(Result.SUCCESS).when(monitorTurnOffUtils).activateSystemdTimer(Mockito.anyString());
@@ -288,8 +293,8 @@ class MonitorStartupUnitTest {
 
         Assertions.assertThrows(MonitorServiceException.class,()->{monitorStartup.createMonitor();});
 
-        Mockito.verify(monitorTurnOnUtils).createSystemdTimerUnit(Mockito.eq(String.valueOf(start)),Mockito.eq(literalStart));
-        Mockito.verify(monitorTurnOffUtils,Mockito.times(1)).createSystemdTimerUnit(Mockito.eq(String.valueOf(stop)),Mockito.eq(literalStop));
+        Mockito.verify(monitorTurnOnUtils).createSystemdTimerUnit(Mockito.eq(startString),Mockito.eq(literalStart),Mockito.eq(startStringSecond));
+        Mockito.verify(monitorTurnOffUtils).createSystemdTimerUnit(Mockito.eq(stopString),Mockito.eq(literalStop),Mockito.eq(stopStringSecond));
         Mockito.verify(monitorTurnOnUtils,Mockito.times(1)).timerReload();
         Mockito.verify(monitorTurnOnUtils,Mockito.times(1)).activateSystemdTimer(Mockito.eq(String.valueOf(start)));
         Mockito.verify(monitorTurnOffUtils,Mockito.times(1)).activateSystemdTimer(Mockito.eq(String.valueOf(stop)));
@@ -311,8 +316,8 @@ class MonitorStartupUnitTest {
         String literalStop = "20:00:00";
 
         Mockito.doReturn(null).when(repository).getMonitor();
-        Mockito.doReturn(Result.SUCCESS).when(monitorTurnOnUtils).createSystemdTimerUnit(Mockito.anyString(),Mockito.anyString());
-        Mockito.doReturn(Result.SUCCESS).when(monitorTurnOffUtils).createSystemdTimerUnit(Mockito.anyString(),Mockito.anyString());
+        Mockito.doReturn(Result.SUCCESS).when(monitorTurnOnUtils).createSystemdTimerUnit(Mockito.anyString(),Mockito.anyString(),Mockito.anyString());
+        Mockito.doReturn(Result.SUCCESS).when(monitorTurnOffUtils).createSystemdTimerUnit(Mockito.anyString(),Mockito.anyString(),Mockito.anyString());
         Mockito.doReturn(Result.SUCCESS).when(monitorTurnOnUtils).timerReload();
         Mockito.doReturn(Result.SUCCESS).when(monitorTurnOnUtils).activateSystemdTimer(Mockito.anyString());
         Mockito.doReturn(Result.SUCCESS).when(monitorTurnOffUtils).activateSystemdTimer(Mockito.anyString());
@@ -321,8 +326,8 @@ class MonitorStartupUnitTest {
 
         Assertions.assertThrows(MonitorServiceException.class,()->{monitorStartup.createMonitor();});
 
-        Mockito.verify(monitorTurnOnUtils).createSystemdTimerUnit(Mockito.eq(String.valueOf(start)),Mockito.eq(literalStart));
-        Mockito.verify(monitorTurnOffUtils,Mockito.times(1)).createSystemdTimerUnit(Mockito.eq(String.valueOf(stop)),Mockito.eq(literalStop));
+        Mockito.verify(monitorTurnOnUtils).createSystemdTimerUnit(Mockito.eq(startString),Mockito.eq(literalStart),Mockito.eq(startStringSecond));
+        Mockito.verify(monitorTurnOffUtils).createSystemdTimerUnit(Mockito.eq(stopString),Mockito.eq(literalStop),Mockito.eq(stopStringSecond));
         Mockito.verify(monitorTurnOnUtils,Mockito.times(1)).timerReload();
         Mockito.verify(monitorTurnOnUtils,Mockito.times(1)).activateSystemdTimer(Mockito.eq(String.valueOf(start)));
         Mockito.verify(monitorTurnOffUtils,Mockito.times(1)).activateSystemdTimer(Mockito.eq(String.valueOf(stop)));
@@ -343,7 +348,7 @@ class MonitorStartupUnitTest {
         Assertions.assertThrows(RuntimeException.class, () -> monitorStartup.createMonitor());
 
 
-        Mockito.verify(monitorTurnOnUtils, Mockito.times(0)).createSystemdTimerUnit(Mockito.any(), Mockito.any());
+        Mockito.verify(monitorTurnOnUtils, Mockito.times(0)).createSystemdTimerUnit(Mockito.any(), Mockito.any(),Mockito.any());
         Mockito.verify(monitorTurnOnUtils,Mockito.times(0)).reversSystemdTimerUnitInsert(Mockito.any());
         Mockito.verify(monitorTurnOffUtils,Mockito.times(0)).reversSystemdTimerUnitInsert(Mockito.any());
         Mockito.verify(monitorTurnOnUtils,Mockito.times(0)).deactivateSystemdTimer(Mockito.anyString());

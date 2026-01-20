@@ -22,7 +22,7 @@ class TimerUtilsIntegrationTest {
 
     private Path tmpDir;
     private Path systemDir;
-    private final String SERVICE_NAME = "alarm.service";
+    private final String SERVICE_NAME = "alarm";
 
     @BeforeEach
     void setUp() throws IOException {
@@ -47,7 +47,7 @@ class TimerUtilsIntegrationTest {
         String onCalendar = "12:00:00";
 
         // Esecuzione del metodo reale
-        Result result = timerUtils.createSystemdTimerUnit(timerName, onCalendar);
+        Result result = timerUtils.createSystemdTimerUnit(timerName, onCalendar, timerName.substring(0,timerName.length()-3));
 
         // 1. Verifica il risultato
         assertEquals(Result.SUCCESS, result);

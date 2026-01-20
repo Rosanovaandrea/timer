@@ -10,6 +10,6 @@ import org.springframework.stereotype.Service;
 public class MonitorTimerShutdownUtilImpl extends TimerUtilsImpl implements TimerUtils {
 
     public MonitorTimerShutdownUtilImpl(@Value("${tmp.directory}" )String tmpDir, @Value("${systemd_monitor.directory}") String systemdTimerDir, @Value("${systemd.monitor_shutdown.service.name}") String serviceFileName) {
-        super(tmpDir, systemdTimerDir, serviceFileName);
+        super(tmpDir, systemdTimerDir, serviceFileName,true);
     }
 }

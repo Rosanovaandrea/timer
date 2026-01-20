@@ -93,7 +93,7 @@ class TimerServiceHybridTest {
         int time = 800000; // Questo genererà il nome file "800000"
 
         // Act
-        Result result = timerService.insertTimer(name, time);
+        Result result = timerService.insertTimer(name, time, 30);
 
         // Assert
         assertEquals(Result.SUCCESS, result, "Il service dovrebbe ritornare SUCCESS");

@@ -19,9 +19,9 @@ public class TimerController {
     private final TimerService timerService;
 
     @PostMapping
-    public ResponseEntity<?> createTimer(@RequestParam String name, @RequestParam int time) {
+    public ResponseEntity<?> createTimer(@RequestParam String name, @RequestParam int time, @RequestParam int symphonyDuration) {
         try {
-            Result result = timerService.insertTimer(name, time);
+            Result result = timerService.insertTimer(name, time, symphonyDuration);
             if (result == Result.SUCCESS) {
                 return ResponseEntity.status(HttpStatus.CREATED).body("Timer creato: " + name);
             }

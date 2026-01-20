@@ -3,7 +3,6 @@ id INTEGER PRIMARY KEY,
 timer_name VARCHAR(100) NOT NULL,
 start_time INTEGER NOT NULL,
 end_time INTEGER NOT NULL,
-CONSTRAINT uk_timer_name UNIQUE (timer_name),
 CONSTRAINT uk_start_time UNIQUE (start_time),
 CONSTRAINT uk_end_time UNIQUE (end_time)
 );

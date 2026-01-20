@@ -4,7 +4,7 @@ import com.rosanova.iot.timer.error.Result;
 
 public interface TimerUtils {
 
-    Result createSystemdTimerUnit(String timerBaseName, String onCalendar);
+    Result createSystemdTimerUnit(String timerBaseName, String onCalendar, String parameter) ;
     Result deleteSystemdTimerUnit(String timerBaseName);
     Result reversSystemdTimerUnitInsert(String timerBaseName);
     Result timerReload();

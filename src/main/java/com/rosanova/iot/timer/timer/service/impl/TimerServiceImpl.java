@@ -7,15 +7,12 @@ import com.rosanova.iot.timer.timer.dto.CheckTimerInsertValidity;
 import com.rosanova.iot.timer.timer.repository.TimerRepository;
 import com.rosanova.iot.timer.timer.service.TimerService;
 import com.rosanova.iot.timer.utils.TimerUtils;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Service
@@ -25,8 +22,9 @@ public class TimerServiceImpl implements TimerService {
 
     private final TimerUtils timerUtils;
 
-    private final int pillowTime = 120_000;
-    private final int intervalTime = 300_000;
+    private final int PILLOW_TIME = 20_000;
+
+    private final int MAX_MILLS_DAY = 86_400_000;
 
     public TimerServiceImpl(@Autowired  TimerRepository repository, @Qualifier("alarmTimer") TimerUtils timerUtils) {
         this.repository = repository;
@@ -34,12 +32,14 @@ public class TimerServiceImpl implements TimerService {
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public Result insertTimer(String name, int time) {
+    public Result insertTimer(String name, int time, int symphony) {
 
         int step = 0;
         Result result = Result.SUCCESS;
-        int start = time-intervalTime;
-        int end = time;
+        int start = Math.max(0, time - PILLOW_TIME );
+        int end = Math.min(MAX_MILLS_DAY, time + PILLOW_TIME);
+
+        String symphonyDuration = String.valueOf(symphony);
 
         Duration duration = Duration.ofMillis(time);
 
@@ -54,15 +54,11 @@ public class TimerServiceImpl implements TimerService {
 
 
 
-        int startPillowTime = start - pillowTime;
-        int endPillowTime = end + pillowTime;
-
-
 
         try {
-            CheckTimerInsertValidity check = repository.countOverlapsAndMaxTimers(startPillowTime, endPillowTime);
+            CheckTimerInsertValidity check = repository.countOverlapsAndMaxTimers(start, end);
 
-            if (check.getOverlaps() > 0 || check.getTotal() >= 20) throw new RuntimeException();
+            if (check.getOverlaps() > 0 || check.getTotal() >= 40) throw new RuntimeException();
 
             Timer timer = new Timer();
             timer.setEndTime(end);
@@ -71,7 +67,7 @@ public class TimerServiceImpl implements TimerService {
 
             repository.insert(timer);
 
-            result = timerUtils.createSystemdTimerUnit(nameFile, onCalendar);
+            result = timerUtils.createSystemdTimerUnit(nameFile, onCalendar,symphonyDuration);
 
             step++;
 
