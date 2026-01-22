@@ -77,11 +77,13 @@ public class TimerRepositoryImpl implements TimerRepository {
      * Preleva i dati e li inserisce in una HashMap esistente tramite ResultSet
      */
     public void addEndTimesToMap(HashMapInt targetMap) {
-        String sql = "SELECT id, end_time FROM timer";
+        String sql = "SELECT id, start_time, end_time FROM timer";
         jdbcTemplate.query(sql, rs -> {
-            // Estrazione primitiva dal ResultSet e aggiunta alla mappa
-            int endTime = rs.getInt("end_time");
-            targetMap.add(endTime);
+
+            int start = rs.getInt("start_time");
+            int end = rs.getInt("end_time");
+            int median = start == 0 ? end - 20_000 : start + 20_000;
+            targetMap.add(median);
         });
     }
 

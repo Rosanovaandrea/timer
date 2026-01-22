@@ -116,10 +116,10 @@ public class TimerRepositoryTest {
     }
 
     @Test
-    @DisplayName("Dovrebbe aggiungere correttamente gli end_time alla HashMapInt")
+    @DisplayName("Dovrebbe aggiungere correttamente i tempi mediani alla HashMapInt")
     void testAddEndTimesToMap() {
-        timerRepository.insert(new Timer(0, "T1", 100, 150));
-        timerRepository.insert(new Timer(0, "T2", 200, 250));
+        timerRepository.insert(new Timer(0, "T1", 0, 150_000));
+        timerRepository.insert(new Timer(0, "T2", 200_000, 450_000));
 
         HashMapInt customMap = new HashMapInt();
         timerRepository.addEndTimesToMap(customMap);
@@ -127,8 +127,8 @@ public class TimerRepositoryTest {
         // Verifica basata sull'implementazione della tua HashMapInt
         // Se HashMapInt stampa i valori o ha un metodo size/get:
         assertNotNull(customMap);
-        assertTrue(customMap.search(150));
-        assertTrue(customMap.search(250));
+        assertTrue(customMap.search(130_000));
+        assertTrue(customMap.search(220_000));
         // Nota: Assicurati che HashMapInt funzioni come previsto dal test
     }
 }
