@@ -28,7 +28,7 @@ class TimerUtilsImplUnitTest {
     final String CMD_DEACTIVATE = "/usr/bin/systemctl --user stop 123.timer && /usr/bin/systemctl --user disable 123.timer";
 
     @Spy
-    TimerUtilsImpl timerUtilsImpl = new TimerUtilsImpl(TMP_DIR,SYSTEM_DIR,SERVICE_FILE_NAME);
+    TimerUtilsImpl timerUtilsImpl = new TimerUtilsImpl(TMP_DIR,SYSTEM_DIR,SERVICE_FILE_NAME,false);
 
     @Test
     void createTimerTest() {

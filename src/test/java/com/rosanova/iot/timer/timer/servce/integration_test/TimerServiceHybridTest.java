@@ -56,7 +56,8 @@ class TimerServiceHybridTest {
             TimerUtilsImpl realImpl = new TimerUtilsImpl(
                     tmp.toString(),
                     system.toString(),
-                    "alarm.service"
+                    "alarm.service",
+                    false
             );
             return spy(realImpl);
         }

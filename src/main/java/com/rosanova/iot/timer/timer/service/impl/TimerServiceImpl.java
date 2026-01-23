@@ -26,7 +26,7 @@ public class TimerServiceImpl implements TimerService {
 
     private final int MAX_MILLS_DAY = 86_400_000;
 
-    public TimerServiceImpl(@Autowired  TimerRepository repository, @Qualifier("alarmTimer") TimerUtils timerUtils) {
+    public TimerServiceImpl(@Autowired  TimerRepository repository, @Qualifier("timerDefault") TimerUtils timerUtils) {
         this.repository = repository;
         this.timerUtils = timerUtils;
     }

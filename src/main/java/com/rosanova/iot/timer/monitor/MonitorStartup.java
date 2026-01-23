@@ -13,7 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.beans.Transient;
 import java.time.Duration;
 
-@Component
+
 public class MonitorStartup {
     private final MonitorRepository repository;
     private final TimerUtils monitorTurnOnUtils;

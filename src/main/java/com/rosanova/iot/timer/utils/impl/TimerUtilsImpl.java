@@ -13,8 +13,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 
-@Service
-@Qualifier("alarmTimer")
+
 public class TimerUtilsImpl implements TimerUtils {
 
 
@@ -53,14 +52,7 @@ public class TimerUtilsImpl implements TimerUtils {
      * @param serviceFileName nome del service da far partire con il timer, compreso di estensione .service
      * @code tempDIr directory temporanea del sistema operativo
      * **/
-    public TimerUtilsImpl(@Value("${tmp.directory}" )String tmpDir,@Value("${systemd.directory}" )String systemdTimerDir, @Value("${systemd.service.name}") String serviceFileName){
-            tempDir = Paths.get(tmpDir);
-            targetDir = Paths.get(systemdTimerDir);
-            this.serviceFileName = serviceFileName;
-            this.activeOnStartup = 3;
 
-
-    }
 
     public TimerUtilsImpl(@Value("${tmp.directory}" )String tmpDir,@Value("${systemd.directory}" )String systemdTimerDir, @Value("${systemd.service.name}") String serviceFileName,boolean activeOnStartup){
         tempDir = Paths.get(tmpDir);

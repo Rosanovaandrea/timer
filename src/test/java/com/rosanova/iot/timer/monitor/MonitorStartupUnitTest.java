@@ -342,7 +342,6 @@ class MonitorStartupUnitTest {
 
     @Test
     void createMonitorErrorOnFirstDatabaseAccess() {
-        // Mock dell'errore iniziale
         Mockito.doThrow(new RuntimeException("DB Connection Error")).when(repository).getMonitor();
 
         Assertions.assertThrows(RuntimeException.class, () -> monitorStartup.createMonitor());

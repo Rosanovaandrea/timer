@@ -37,7 +37,8 @@ class TimerUtilsIntegrationTest {
         timerUtils = new TimerUtilsImpl(
                 tmpDir.toString(),
                 systemDir.toString(),
-                SERVICE_NAME
+                SERVICE_NAME,
+                false
         );
     }
 
