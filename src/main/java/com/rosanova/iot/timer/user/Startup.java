@@ -6,12 +6,15 @@ import com.rosanova.iot.timer.user.repository.UserRepository;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.net.UnknownServiceException;
 
+@Component
+@Profile("!test")
 public class Startup {
     private static final String USERNAME = "root";
     private static final String RESET = "RESET";

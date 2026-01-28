@@ -9,6 +9,7 @@ import com.rosanova.iot.timer.utils.TimerUtils;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,6 +18,7 @@ import java.time.Duration;
 
 
 @Component
+@Profile("!test")
 public class MonitorStartup {
     private final MonitorRepository repository;
     private final TimerUtils monitorTurnOnUtils;

@@ -9,6 +9,7 @@ import com.rosanova.iot.timer.utils.impl.HashMapInt;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -23,6 +24,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
 @Component
+@Profile("!test")
 public class CleanUp {
 
     private final ExecutorService threadPool;

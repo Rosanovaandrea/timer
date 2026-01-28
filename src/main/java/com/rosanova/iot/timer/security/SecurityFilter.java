@@ -13,7 +13,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
-//@Component
+@Component
 @RequiredArgsConstructor
 public class SecurityFilter extends OncePerRequestFilter {
 
@@ -29,9 +29,11 @@ public class SecurityFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) {
 
+        int padding = 0;
+        if (request.getContextPath() != null && !request.getContextPath().isEmpty()) {padding = request.getContextPath().length();}
 
         try {
-            if (!request.getServletPath().startsWith(URL_PROTECTED_PATH)) {
+            if (!request.getRequestURI().regionMatches(padding ,URL_PROTECTED_PATH, 0, URL_PROTECTED_PATH.length())) {
                 filterChain.doFilter(request, response);
                 return;
             }
@@ -75,8 +77,12 @@ public class SecurityFilter extends OncePerRequestFilter {
                 response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
                 return;
             }
+            long expiration = getCurrentTimeMillis() - timeToCheck;
 
-            if (getCurrentTimeMillis() - timeToCheck > TOKEN_DURATION) {
+            // per evitare token generati "nel futuro" causati da un sfasamento dell'orologio del raspberry
+            //esempio, il raspberry genera un token nel 2025, si riavvia, perde l'orario e ritorna al 1970
+            //in questo caso expiration è negativo e passa il controllo
+            if ( expiration > TOKEN_DURATION || expiration < 0 ) {
                 response.sendError(HttpServletResponse.SC_FORBIDDEN);
                 return;
             }

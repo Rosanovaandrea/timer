@@ -44,7 +44,7 @@ class SecurityFilterUnitTest {
         String authenticationToken = "1737719000000ABCDE1234567890ABCDE1234567890ABCDE123456789";
 
         String cookieName = "TIMER_SESSION_TOKEN";
-        Mockito.doReturn(authenticatedPath).when(request).getServletPath();
+        Mockito.doReturn(authenticatedPath).when(request).getRequestURI();
         Cookie authentication = new Cookie(cookieName,authenticationToken);
         Cookie[] cookiesArray = {authentication};
         Mockito.doReturn(cookiesArray).when(request).getCookies();
@@ -57,7 +57,7 @@ class SecurityFilterUnitTest {
         Mockito.verify(securityFilter).getCurrentTimeMillis();
         Mockito.verify(securityFilter).compareString(Mockito.any(),Mockito.any());
         Mockito.verify(request).getCookies();
-        Mockito.verify(request).getServletPath();
+        Mockito.verify(request).getRequestURI();
         Mockito.verify(hashingUtils).computeHMACSHA256(Mockito.any());
         Mockito.verify(response,Mockito.never()).sendError(Mockito.anyInt());
         Mockito.verify(filterChain).doFilter(request,response);
@@ -67,7 +67,7 @@ class SecurityFilterUnitTest {
     void securityFilterNoProtectedPath() throws ServletException, IOException {
         String authenticatedPath= "/public";
 
-        Mockito.doReturn(authenticatedPath).when(request).getServletPath();
+        Mockito.doReturn(authenticatedPath).when(request).getRequestURI();
 
 
         securityFilter.doFilterInternal(request,response,filterChain);
@@ -76,7 +76,7 @@ class SecurityFilterUnitTest {
         Mockito.verify(securityFilter,Mockito.never()).getCurrentTimeMillis();
         Mockito.verify(securityFilter,Mockito.never()).compareString(Mockito.any(),Mockito.any());
         Mockito.verify(request,Mockito.never()).getCookies();
-        Mockito.verify(request).getServletPath();
+        Mockito.verify(request).getRequestURI();
         Mockito.verify(hashingUtils,Mockito.never()).computeHMACSHA256(Mockito.any());
         Mockito.verify(response,Mockito.never()).sendError(Mockito.anyInt());
         Mockito.verify(filterChain).doFilter(request,response);
@@ -85,7 +85,7 @@ class SecurityFilterUnitTest {
     @Test
     void securityFilterErrorNoCookies() throws ServletException, IOException {
         String authenticatedPath= "/authenticated";
-        Mockito.doReturn(authenticatedPath).when(request).getServletPath();
+        Mockito.doReturn(authenticatedPath).when(request).getRequestURI();
         Mockito.doReturn(null).when(request).getCookies();
 
         securityFilter.doFilterInternal(request,response,filterChain);
@@ -94,7 +94,7 @@ class SecurityFilterUnitTest {
         Mockito.verify(securityFilter,Mockito.never()).getCurrentTimeMillis();
         Mockito.verify(securityFilter,Mockito.never()).compareString(Mockito.any(),Mockito.any());
         Mockito.verify(request).getCookies();
-        Mockito.verify(request).getServletPath();
+        Mockito.verify(request).getRequestURI();
         Mockito.verify(hashingUtils,Mockito.never()).computeHMACSHA256(Mockito.any());
         Mockito.verify(response).sendError(Mockito.anyInt());
         Mockito.verify(filterChain,Mockito.never()).doFilter(request,response);
@@ -103,7 +103,7 @@ class SecurityFilterUnitTest {
     @Test
     void securityFilterErrorNoToken() throws ServletException, IOException {
         String authenticatedPath= "/authenticated";
-        Mockito.doReturn(authenticatedPath).when(request).getServletPath();
+        Mockito.doReturn(authenticatedPath).when(request).getRequestURI();
         Mockito.doReturn(new Cookie[0]).when(request).getCookies();
 
         securityFilter.doFilterInternal(request,response,filterChain);
@@ -112,7 +112,7 @@ class SecurityFilterUnitTest {
         Mockito.verify(securityFilter,Mockito.never()).getCurrentTimeMillis();
         Mockito.verify(securityFilter,Mockito.never()).compareString(Mockito.any(),Mockito.any());
         Mockito.verify(request).getCookies();
-        Mockito.verify(request).getServletPath();
+        Mockito.verify(request).getRequestURI();
         Mockito.verify(hashingUtils,Mockito.never()).computeHMACSHA256(Mockito.any());
         Mockito.verify(response).sendError(Mockito.anyInt());
         Mockito.verify(filterChain,Mockito.never()).doFilter(request,response);
@@ -123,7 +123,7 @@ class SecurityFilterUnitTest {
         String authenticatedPath= "/authenticated";
         String authenticationToken = "1737719000000ABCDE1";
         String cookieName = "TIMER_SESSION_TOKEN";
-        Mockito.doReturn(authenticatedPath).when(request).getServletPath();
+        Mockito.doReturn(authenticatedPath).when(request).getRequestURI();
         Cookie authentication = new Cookie(cookieName,authenticationToken);
         Cookie[] cookiesArray = {authentication};
         Mockito.doReturn(cookiesArray).when(request).getCookies();
@@ -134,7 +134,7 @@ class SecurityFilterUnitTest {
         Mockito.verify(securityFilter,Mockito.never()).getCurrentTimeMillis();
         Mockito.verify(securityFilter,Mockito.never()).compareString(Mockito.any(),Mockito.any());
         Mockito.verify(request).getCookies();
-        Mockito.verify(request).getServletPath();
+        Mockito.verify(request).getRequestURI();
         Mockito.verify(hashingUtils,Mockito.never()).computeHMACSHA256(Mockito.any());
         Mockito.verify(response).sendError(Mockito.anyInt());
         Mockito.verify(filterChain,Mockito.never()).doFilter(request,response);
@@ -146,7 +146,7 @@ class SecurityFilterUnitTest {
         String authenticationToken = "1737719000000ABCDE1234567890ABCDE1234567890ABCDE123456789";
 
         String cookieName = "TIMER_SESSION_TOKEN";
-        Mockito.doReturn(authenticatedPath).when(request).getServletPath();
+        Mockito.doReturn(authenticatedPath).when(request).getRequestURI();
         Cookie authentication = new Cookie(cookieName,authenticationToken);
         Cookie[] cookiesArray = {authentication};
         Mockito.doReturn(cookiesArray).when(request).getCookies();
@@ -159,7 +159,7 @@ class SecurityFilterUnitTest {
         Mockito.verify(securityFilter,Mockito.never()).getCurrentTimeMillis();
         Mockito.verify(securityFilter).compareString(Mockito.any(),Mockito.any());
         Mockito.verify(request).getCookies();
-        Mockito.verify(request).getServletPath();
+        Mockito.verify(request).getRequestURI();
         Mockito.verify(hashingUtils).computeHMACSHA256(Mockito.any());
         Mockito.verify(response).sendError(Mockito.anyInt());
         Mockito.verify(filterChain,Mockito.never()).doFilter(request,response);
@@ -171,7 +171,7 @@ class SecurityFilterUnitTest {
         String authenticationToken = "1737719000000ABCDE1234567890ABCDE1234567890ABCDE123456789";
 
         String cookieName = "TIMER_SESSION_TOKEN";
-        Mockito.doReturn(authenticatedPath).when(request).getServletPath();
+        Mockito.doReturn(authenticatedPath).when(request).getRequestURI();
         Cookie authentication = new Cookie(cookieName,authenticationToken);
         Cookie[] cookiesArray = {authentication};
         Mockito.doReturn(cookiesArray).when(request).getCookies();
@@ -184,9 +184,41 @@ class SecurityFilterUnitTest {
         Mockito.verify(securityFilter).getCurrentTimeMillis();
         Mockito.verify(securityFilter).compareString(Mockito.any(),Mockito.any());
         Mockito.verify(request).getCookies();
-        Mockito.verify(request).getServletPath();
+        Mockito.verify(request).getRequestURI();
         Mockito.verify(hashingUtils).computeHMACSHA256(Mockito.any());
         Mockito.verify(response).sendError(Mockito.anyInt());
         Mockito.verify(filterChain,Mockito.never()).doFilter(request,response);
+    }
+    @Test
+    void securityFilterErrorTokenFromFuture() throws ServletException, IOException {
+        // 1. Setup dati: Timestamp nel "futuro" rispetto al server
+        String futureTimestamp = "1737719000000";
+        String validHash = "ABCDE1234567890ABCDE1234567890ABCDE123456789";
+        String authenticationToken = futureTimestamp + validHash;
+        String authenticatedPath = "/authenticated";
+        String cookieName = "TIMER_SESSION_TOKEN";
+
+        // 2. Mocking delle dipendenze
+        Mockito.doReturn(authenticatedPath).when(request).getRequestURI();
+        Cookie authentication = new Cookie(cookieName, authenticationToken);
+        Mockito.doReturn(new Cookie[]{authentication}).when(request).getCookies();
+
+        // L'hash deve essere corretto per superare il primo controllo
+        Mockito.doReturn(validHash).when(hashingUtils).computeHMACSHA256(futureTimestamp);
+
+        // Simuliamo che il server sia "indietro": il tempo attuale è minore del timestamp del token
+        // Timestamp token: ...000, Tempo Server: ...999 (1 millisecondo nel passato)
+        Mockito.doReturn(1737718999999L).when(securityFilter).getCurrentTimeMillis();
+
+        // 3. Esecuzione
+        securityFilter.doFilterInternal(request, response, filterChain);
+
+        // 4. Verifiche
+        // Deve aver verificato il tempo
+        Mockito.verify(securityFilter).getCurrentTimeMillis();
+        // Deve aver dato errore (403 Forbidden) perché expiration < 0
+        Mockito.verify(response).sendError(HttpServletResponse.SC_FORBIDDEN);
+        // Non deve aver mai proseguito nella catena
+        Mockito.verify(filterChain, Mockito.never()).doFilter(request, response);
     }
 }
