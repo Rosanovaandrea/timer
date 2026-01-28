@@ -12,4 +12,5 @@ public interface UserRepository {
     User findById(long id);
     void updateUser(long id, String password);
     int findNumberOfUsers();
+    void deleteAllUsers();
 }

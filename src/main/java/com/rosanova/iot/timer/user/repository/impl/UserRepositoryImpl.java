@@ -49,6 +49,12 @@ public class UserRepositoryImpl implements UserRepository {
         return result.isEmpty() ? null : result.get(0);
     }
 
+
+    public void deleteAllUsers() {
+        String sql = "DELETE FROM user_timer";
+        jdbcTemplate.update(sql);
+    }
+
     // ✅ Retrieve all users
     public List<User> findAllUsers() {
         String sql = "SELECT * FROM user_timer";

@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 @CrossOrigin("*")
 @RestController
-@RequestMapping("/api/monitor")
+@RequestMapping("/authenticated/api/monitor")
 @RequiredArgsConstructor
 public class MonitorController {
 
