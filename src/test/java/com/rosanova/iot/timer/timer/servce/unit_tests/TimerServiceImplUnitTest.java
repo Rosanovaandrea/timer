@@ -8,11 +8,15 @@ import com.rosanova.iot.timer.timer.repository.TimerRepository;
 import com.rosanova.iot.timer.timer.service.impl.TimerServiceImpl;
 import com.rosanova.iot.timer.utils.TimerUtils;
 import org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
 import org.mockito.Mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -27,13 +31,84 @@ public class TimerServiceImplUnitTest {
     private TimerRepository repository;
     @Mock
     private TimerUtils timerUtils;
+    @Mock
+    private ReentrantLock sharedLock;
 
-    @InjectMocks
     private TimerServiceImpl timerService;
 
     private final String NAME = "TestTimer";
     private final int TIME = 600_000; // 10 minuti (start sarà 5 min)
     private final String FILE_NAME = "600000";
+
+    @BeforeEach
+    void setUp() {
+        // Creiamo l'istanza reale con i mock
+        TimerServiceImpl realService = new TimerServiceImpl(repository, timerUtils, sharedLock);
+        // Creiamo lo Spy dell'istanza reale
+        timerService = spy(realService);
+    }
+
+    @Test
+    void insertTimerSynchronized_Success() throws InterruptedException {
+        // GIVEN
+        when(sharedLock.tryLock(100L, TimeUnit.MILLISECONDS)).thenReturn(true);
+        // Mockiamo il metodo interno dello spy
+        doReturn(Result.SUCCESS).when(timerService).insertTimer(anyString(), anyInt(), anyInt());
+
+        // WHEN
+        Result res = timerService.insertTimerSynchronized(NAME, TIME, 30);
+
+        // THEN
+        assertEquals(Result.SUCCESS, res);
+        verify(sharedLock).tryLock(100L, TimeUnit.MILLISECONDS);
+        verify(timerService).insertTimer(NAME, TIME, 30); // Verifica che sia stato chiamato il metodo interno
+        verify(sharedLock).unlock(); // Fondamentale: deve rilasciare il lock
+    }
+
+    @Test
+    void insertTimerSynchronized_LockFail_ShouldReturnError() throws InterruptedException {
+        // GIVEN
+        when(sharedLock.tryLock(anyLong(), any(TimeUnit.class))).thenReturn(false);
+
+        // WHEN
+        Result res = timerService.insertTimerSynchronized(NAME, TIME, 30);
+
+        // THEN
+        assertEquals(Result.ERROR, res);
+        verify(timerService, never()).insertTimer(anyString(), anyInt(), anyInt()); // Non deve mai entrare nel metodo interno
+        verify(sharedLock, never()).unlock(); // Non deve sbloccare se non ha acquisito
+    }
+
+    @Test
+    void insertTimerSynchronized_InternalCrash_ShouldStillUnlock() throws InterruptedException {
+        // GIVEN
+        when(sharedLock.tryLock(anyLong(), any(TimeUnit.class))).thenReturn(true);
+        // Simuliamo un errore imprevisto (es. RuntimeException)
+        doThrow(new RuntimeException("Crash")).when(timerService).insertTimer(anyString(), anyInt(), anyInt());
+
+        // WHEN
+        Result res = timerService.insertTimerSynchronized(NAME, TIME, 30);
+
+        // THEN
+        assertEquals(Result.ERROR, res);
+        verify(sharedLock).unlock(); // Il lock deve essere rilasciato nonostante l'eccezione
+    }
+
+    @Test
+    void removeTimerSynchronized_Success() throws InterruptedException {
+        // GIVEN
+        long id = 100L;
+        when(sharedLock.tryLock(anyLong(), any(TimeUnit.class))).thenReturn(true);
+        doReturn(Result.SUCCESS).when(timerService).removeTimer(id);
+
+        // WHEN
+        Result res = timerService.removeTimerSynchronized(id);
+
+        // THEN
+        assertEquals(Result.SUCCESS, res);
+        verify(timerService).removeTimer(id);
+        verify(sharedLock).unlock();
+    }
 
     @Test
     void insertTimer_Success_ShouldExecuteEverything() {
@@ -136,11 +211,13 @@ public class TimerServiceImplUnitTest {
     @Test
     void testDeleteTimerRight(){
         int id = 1;
-        Timer timerToDelete = new Timer(id,"alarm_to_delete",50_000,120_000 );
+        Timer timerToDelete = new Timer(id,"alarm_to_delete",80_000,120_000 );
+        String filename=String.valueOf(100_000 /* median 80_000, 120_000*/);
         doReturn(timerToDelete).when(repository).findById(id);
+
         doNothing().when(repository).deleteById(id);
-        doReturn(Result.SUCCESS).when(timerUtils).deactivateSystemdTimer(String.valueOf(timerToDelete.getEndTime()));
-        doReturn(Result.SUCCESS).when(timerUtils).deleteSystemdTimerUnit(String.valueOf(timerToDelete.getEndTime()));
+        doReturn(Result.SUCCESS).when(timerUtils).deactivateSystemdTimer(filename);
+        doReturn(Result.SUCCESS).when(timerUtils).deleteSystemdTimerUnit(filename);
         doReturn(Result.SUCCESS).when(timerUtils).timerReload();
 
         Result result = timerService.removeTimer(id);
@@ -149,8 +226,8 @@ public class TimerServiceImplUnitTest {
 
         verify(repository).findById(id);
         verify(repository).deleteById(id);
-        verify(timerUtils).deactivateSystemdTimer(String.valueOf(timerToDelete.getEndTime()));
-        verify(timerUtils).deleteSystemdTimerUnit(String.valueOf(timerToDelete.getEndTime()));
+        verify(timerUtils).deactivateSystemdTimer(filename);
+        verify(timerUtils).deleteSystemdTimerUnit(filename);
 
     }
 
@@ -172,8 +249,8 @@ public class TimerServiceImplUnitTest {
     @Test
     void testDeleteTimerFailureAtDeactivate() {
         int id = 1;
-        Timer timerToDelete = new Timer(id, "alarm", 50_000, 120_000);
-        String filename = String.valueOf(timerToDelete.getEndTime());
+        Timer timerToDelete = new Timer(id, "alarm", 80_000, 120_000);
+        String filename = String.valueOf(100_000/*median value 80_000 120_000*/);
 
         doReturn(timerToDelete).when(repository).findById(id);
 
@@ -191,8 +268,8 @@ public class TimerServiceImplUnitTest {
     @Test
     void testDeleteTimerFailureAtDeleteUnit() {
         int id = 1;
-        Timer timerToDelete = new Timer(id, "alarm", 50_000, 120_000);
-        String filename = String.valueOf(timerToDelete.getEndTime());
+        Timer timerToDelete = new Timer(id, "alarm", 80_000, 120_000);
+        String filename = String.valueOf(100_000/*median value 80_000 120_000 */);
 
         doReturn(timerToDelete).when(repository).findById(id);
         doReturn(Result.SUCCESS).when(timerUtils).deactivateSystemdTimer(filename);
@@ -260,8 +337,8 @@ public class TimerServiceImplUnitTest {
     @Test
     void testDeleteTimerFailureAtTimeReload() {
         int id = 1;
-        Timer timerToDelete = new Timer(id, "alarm", 50_000, 120_000);
-        String filename = String.valueOf(timerToDelete.getEndTime());
+        Timer timerToDelete = new Timer(id, "alarm", 80_000, 120_000);
+        String filename = String.valueOf(100_000 /*median value 80_000 120_000*/);
 
         doReturn(timerToDelete).when(repository).findById(id);
         doReturn(Result.SUCCESS).when(timerUtils).deactivateSystemdTimer(filename);
@@ -285,8 +362,8 @@ public class TimerServiceImplUnitTest {
     @Test
     void testDeleteTimerFatalErrorDuringRollback() {
         int id = 1;
-        Timer timerToDelete = new Timer(id, "alarm", 50_000, 120_000);
-        String filename = String.valueOf(timerToDelete.getEndTime());
+        Timer timerToDelete = new Timer(id, "alarm", 80_000, 120_000);
+        String filename = String.valueOf(100_000/* median 80_000 120_000*/);
 
         doReturn(timerToDelete).when(repository).findById(id);
         doReturn(Result.ERROR).when(timerUtils).deactivateSystemdTimer(filename);

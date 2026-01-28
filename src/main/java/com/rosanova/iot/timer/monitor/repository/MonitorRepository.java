@@ -9,6 +9,7 @@ public interface MonitorRepository {
     int updateStart(long id, int newStart);
     int updateStop(long id, int newStop);
     int deleteById(long id);
+    boolean existsMonitor();
     boolean isStartBeforeStop(long id);
     boolean isStopAfterStart(long id);
 }

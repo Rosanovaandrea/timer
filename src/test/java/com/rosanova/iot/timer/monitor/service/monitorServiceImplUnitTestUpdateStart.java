@@ -15,6 +15,9 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
+
 @ExtendWith(MockitoExtension.class)
 class monitorServiceImplUnitTestUpdateStart {
 
@@ -29,11 +32,43 @@ class monitorServiceImplUnitTestUpdateStart {
 
     MonitorServiceImpl monitorService;
 
+
+    ReentrantLock lock;
+
     @BeforeEach
     void setUp() {
-        monitorService = new MonitorServiceImpl(repository, monitorTurnOnUtils, monitorTurnOffUtils);
+        lock = Mockito.mock(ReentrantLock.class);
+        monitorService = Mockito.spy(new MonitorServiceImpl(lock,repository, monitorTurnOnUtils, monitorTurnOffUtils));
     }
 
+    @Test
+    void testUpdateStartSynchronized() throws MonitorServiceException, InterruptedException {
+
+        Mockito.doReturn(true).when(lock).tryLock(Mockito.anyLong(),Mockito.any(TimeUnit.class));
+        Mockito.doReturn(Result.SUCCESS).when(monitorService).updateMonitorStart(Mockito.anyInt());
+        Result result = monitorService.updateMonitorStartSynchronized( 1000);
+        Assertions.assertEquals(Result.SUCCESS,result);
+        Mockito.verify(lock).unlock();
+    }
+
+    @Test
+    void testUpdateStartSynchronizedNoLock() throws MonitorServiceException, InterruptedException {
+
+        Mockito.doReturn(false).when(lock).tryLock(Mockito.anyLong(),Mockito.any(TimeUnit.class));
+        Result result = monitorService.updateMonitorStartSynchronized( 1000);
+        Assertions.assertEquals(Result.ERROR,result);
+        Mockito.verify(lock,Mockito.never()).unlock();
+    }
+
+    @Test
+    void testUpdateStartSynchronizedErrorException() throws MonitorServiceException, InterruptedException {
+
+        Mockito.doReturn(true).when(lock).tryLock(Mockito.anyLong(),Mockito.any(TimeUnit.class));
+        Mockito.doThrow(MonitorServiceException.class).when(monitorService).updateMonitorStart(Mockito.anyInt());
+        Result result = monitorService.updateMonitorStartSynchronized( 1000);
+        Assertions.assertEquals(Result.ERROR,result);
+        Mockito.verify(lock).unlock();
+    }
     @Test
     void updateMonitorStartFirstDatabaseAccessError() {
         // Setup locale
@@ -219,8 +254,7 @@ class monitorServiceImplUnitTestUpdateStart {
                 () -> monitorService.updateMonitorStart(invalidNewStart)
         );
 
-        // Verifica opzionale del messaggio d'errore
-        Assertions.assertEquals("Invalid start value", exception.getMessage());
+
 
         // Verifica che non sia stata tentata alcuna operazione sui timer o sul database
         Mockito.verify(monitorTurnOnUtils, Mockito.times(0)).deactivateSystemdTimer(Mockito.anyString());

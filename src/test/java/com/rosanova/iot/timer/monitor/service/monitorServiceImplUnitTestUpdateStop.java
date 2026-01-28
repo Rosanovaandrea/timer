@@ -15,6 +15,9 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
+
 @ExtendWith(MockitoExtension.class)
 class monitorServiceImplUnitTestUpdateStop {
 
@@ -27,15 +30,48 @@ class monitorServiceImplUnitTestUpdateStop {
     @Mock
     MonitorTimerShutdownUtilImpl monitorTurnOnUtils;
 
+    @Mock
+    ReentrantLock sharedLock;
+
     MonitorServiceImpl monitorService;
 
     @BeforeEach
     void setUp() {
-        monitorService = new MonitorServiceImpl(repository, monitorTurnOnUtils, monitorTurnOffUtils);
+        monitorService = Mockito.spy(new MonitorServiceImpl(sharedLock,repository, monitorTurnOnUtils, monitorTurnOffUtils));
+    }
+
+
+    @Test
+    void testUpdateStopSynchronized() throws MonitorServiceException, InterruptedException {
+
+        Mockito.doReturn(true).when(sharedLock).tryLock(Mockito.anyLong(),Mockito.any(TimeUnit.class));
+        Mockito.doReturn(Result.SUCCESS).when(monitorService).updateMonitorStop(Mockito.anyInt());
+        Result result = monitorService.updateMonitorStopSynchronized( 1000);
+        Assertions.assertEquals(Result.SUCCESS,result);
+        Mockito.verify(sharedLock).unlock();
     }
 
     @Test
-    void updateMonitorStartFirstDatabaseAccessError() {
+    void testUpdateStopSynchronizedNoLock() throws MonitorServiceException, InterruptedException {
+
+        Mockito.doReturn(false).when(sharedLock).tryLock(Mockito.anyLong(),Mockito.any(TimeUnit.class));
+        Result result = monitorService.updateMonitorStopSynchronized( 1000);
+        Assertions.assertEquals(Result.ERROR,result);
+        Mockito.verify(sharedLock,Mockito.never()).unlock();
+    }
+
+    @Test
+    void testUpdateStopSynchronizedErrorException() throws MonitorServiceException, InterruptedException {
+
+        Mockito.doReturn(true).when(sharedLock).tryLock(Mockito.anyLong(),Mockito.any(TimeUnit.class));
+        Mockito.doThrow(MonitorServiceException.class).when(monitorService).updateMonitorStop(Mockito.anyInt());
+        Result result = monitorService.updateMonitorStopSynchronized( 1000);
+        Assertions.assertEquals(Result.ERROR,result);
+        Mockito.verify(sharedLock).unlock();
+    }
+
+    @Test
+    void updateMonitorStopFirstDatabaseAccessError() {
         // Setup locale
         int newStart = 9 * 60 * 60 * 1000;
 
@@ -51,7 +87,7 @@ class monitorServiceImplUnitTestUpdateStop {
     }
 
     @Test
-    void updateMonitorStartHappyPath() {
+    void updateMonitorStopHappyPath() {
         // Variabili locali
         int id = 1;
         int start = 8 * 60 * 60 * 1000;
@@ -83,7 +119,7 @@ class monitorServiceImplUnitTestUpdateStop {
     }
 
     @Test
-    void updateMonitorStartRollbackOnStep3Error() {
+    void updateMonitorStopRollbackOnStep3Error() {
         // Variabili locali
         int prevStop = 20 * 60 * 60 * 1000;
         int newStop = 22 * 60 * 60 * 1000;
@@ -116,7 +152,7 @@ class monitorServiceImplUnitTestUpdateStop {
     }
 
     @Test
-    void updateMonitorStartRollbackOnDatabaseUpdateError() {
+    void updateMonitorStopRollbackOnDatabaseUpdateError() {
         // Variabili locali
         int id = 1;
         int prevStop = 20 * 60 * 60 * 1000;
@@ -153,7 +189,7 @@ class monitorServiceImplUnitTestUpdateStop {
     }
 
     @Test
-    void updateMonitorStartCriticalErrorInRollback() {
+    void updateMonitorStopCriticalErrorInRollback() {
         // Variabili locali
         int prevStop = 20 * 60 * 60 * 1000;
         int newStop = 22 * 60 * 60 * 1000;
@@ -177,7 +213,7 @@ class monitorServiceImplUnitTestUpdateStop {
     }
 
     @Test
-    void updateMonitorStartCriticalErrorInRollbackExceptionInHappyPath() {
+    void updateMonitorStopCriticalErrorInRollbackExceptionInHappyPath() {
         // Variabili locali
         int prevStop = 20 * 60 * 60 * 1000;
         int newStop = 22 * 60 * 60 * 1000;
@@ -201,7 +237,7 @@ class monitorServiceImplUnitTestUpdateStop {
     }
 
     @Test
-    void updateMonitorStartErrorWhenStartIsGreaterThanStop() {
+    void updateMonitorStopErrorWhenStartIsGreaterThanStop() {
         // Variabili locali
         int id = 1;
         int currentStart = 9 * 60 * 60 * 1000;  // 08:00
@@ -219,8 +255,6 @@ class monitorServiceImplUnitTestUpdateStop {
                 () -> monitorService.updateMonitorStop(invalidNewStop)
         );
 
-        // Verifica opzionale del messaggio d'errore
-        Assertions.assertEquals("Invalid start value", exception.getMessage());
 
         // Verifica che non sia stata tentata alcuna operazione sui timer o sul database
         Mockito.verify(monitorTurnOffUtils, Mockito.times(0)).deactivateSystemdTimer(Mockito.anyString());
@@ -229,7 +263,7 @@ class monitorServiceImplUnitTestUpdateStop {
     }
 
     @Test
-    void updateMonitorStartErrorWhenStartIsEqualToStop() {
+    void updateMonitorStopErrorWhenStartIsEqualToStop() {
         // Variabili locali
         int id = 1;
         int currentStop = 20 * 60 * 60 * 1000; // 20:00

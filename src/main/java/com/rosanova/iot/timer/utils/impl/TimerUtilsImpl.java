@@ -7,7 +7,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -23,13 +25,13 @@ public class TimerUtilsImpl implements TimerUtils {
     //file
     private static final String[] FILE_STATIC = {"[Unit]\nDescription=Custom Timer for ", "\n\n[Timer]\nOnCalendar= *-*-* ","\nPersistent=true\nUnit=", "\nUnit=", "\n\n[Install]\nWantedBy=timers.target\n"};
 
-    private static final String DAEMON_RELOAD = " systemctl --user daemon-reload";
+    private static final String DAEMON_RELOAD = "systemctl --user daemon-reload";
 
     //command
-    private static final String[] COMMAND = {"/usr/bin/systemctl --user enable ", " && /usr/bin/systemctl --user start "};
+    private static final String[] COMMAND = {"systemctl --user enable --now "};
 
     //deactivate-command
-    private static final String[] COMMAND_DEACTIVATION = { "/usr/bin/systemctl --user stop ", " && /usr/bin/systemctl --user disable "};
+    private static final String[] COMMAND_DEACTIVATION = { "systemctl --user disable --now "};
 
     private static final String SERVICE = ".service";
 
@@ -157,8 +159,10 @@ public class TimerUtilsImpl implements TimerUtils {
 
 
     public Result writeTimer(Path tempTimerFile, String timerContent) {
-        try {
-            Files.writeString(tempTimerFile, timerContent);
+        try (java.io.FileOutputStream fos = new java.io.FileOutputStream(tempTimerFile.toFile())) {
+            fos.write(timerContent.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            fos.flush();
+            fos.getFD().sync(); // Forza il passaggio RAM -> Disco (SD Card)
             return Result.SUCCESS;
         } catch (IOException e) {
             System.err.println(ERROR_IO_TIMER_WRITE);
@@ -228,20 +232,25 @@ public class TimerUtilsImpl implements TimerUtils {
 
         StringBuilder commandBuilder = new StringBuilder(150);
 
-        commandBuilder.append(COMMAND[0]).append(fullTimerName)
-                .append(COMMAND[1]).append(fullTimerName);
+        commandBuilder.append(COMMAND[0]).append(fullTimerName);
 
         String[] fullCommand = new String[3];
         fullCommand[0] = COMMAND_PREFIX[0]; // /bin/sh
         fullCommand[1] = COMMAND_PREFIX[1]; // -c
         fullCommand[2] = commandBuilder.toString();
 
+        System.out.println(fullCommand[0] + fullCommand[1]+fullCommand[2]);
+
         try {
             ProcessBuilder pb = getProcessBuilder(fullCommand);
+
+            pb.environment().put("XDG_RUNTIME_DIR", "/run/user/1000");
 
             Process process = pb.start();
 
             int exitCode = process.waitFor();
+
+
 
             if (exitCode != 0) {
                 System.err.println(ERROR_SYSTEMCTL);
@@ -278,8 +287,7 @@ public class TimerUtilsImpl implements TimerUtils {
 
         StringBuilder commandBuilder = new StringBuilder(150);
 
-        commandBuilder.append(COMMAND_DEACTIVATION[0]).append(fullTimerName)
-                .append(COMMAND_DEACTIVATION[1]).append(fullTimerName);
+        commandBuilder.append(COMMAND_DEACTIVATION[0]).append(fullTimerName);
 
         String[] fullCommand = new String[3];
         fullCommand[0] = COMMAND_PREFIX[0]; // /bin/sh

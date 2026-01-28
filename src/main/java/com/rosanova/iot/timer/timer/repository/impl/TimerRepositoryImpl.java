@@ -46,7 +46,7 @@ public class TimerRepositoryImpl implements TimerRepository {
      */
     @Cacheable(value = "timers")
     public List<Timer> findAll() {
-        String sql = "SELECT * FROM timer";
+        String sql = "SELECT * FROM timer ORDER BY start_time ASC";
         return jdbcTemplate.query(sql, (rs, rowNum) -> mapRowToTimer(rs));
     }
 

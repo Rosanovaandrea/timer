@@ -85,6 +85,9 @@ public class TimerRepositoryTest {
 
         List<Timer> list = timerRepository.findAll();
         assertEquals(2, list.size());
+        assertEquals("T1", list.get(0).getTimerName());
+        assertEquals("T2", list.get(1).getTimerName());
+
     }
 
     @Test

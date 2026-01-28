@@ -5,6 +5,8 @@ import com.rosanova.iot.timer.monitor.Monitor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 public class MonitorRepositoryImpl implements MonitorRepository {
 
@@ -28,17 +30,16 @@ public class MonitorRepositoryImpl implements MonitorRepository {
 
     // ottenere il monitor
     public Monitor getMonitor() {
-        String sql = "SELECT * FROM monitor_timer";
-        return jdbcTemplate.query(sql,
-        (rs) ->{if(rs.next()){
-            Monitor monitor = new Monitor();
-            monitor.setId(rs.getLong("id"));
-            monitor.setStart(rs.getInt("start"));
-            monitor.setStop(rs.getInt("stop"));
-            return monitor;
-        }
-        return null;
+        String sql = "SELECT id, start, stop FROM monitor_timer LIMIT 1";
+        List<Monitor> results = jdbcTemplate.query(sql, (rs, rowNum) -> {
+            Monitor m = new Monitor();
+            m.setId(rs.getLong("id"));
+            m.setStart(rs.getInt("start"));
+            m.setStop(rs.getInt("stop"));
+            return m;
         });
+
+        return results.isEmpty() ? null : results.get(0);
     }
 
     // Modificare lo start
@@ -57,6 +58,12 @@ public class MonitorRepositoryImpl implements MonitorRepository {
     public int deleteById(long id) {
         String sql = "DELETE FROM monitor_timer WHERE id = ?";
         return jdbcTemplate.update(sql, id);
+    }
+
+    public boolean existsMonitor() {
+        String sql = "SELECT COUNT(*) FROM monitor_timer";
+        Integer count = jdbcTemplate.queryForObject(sql, Integer.class);
+        return count != null && count > 0;
     }
 
     // Metodo per vedere se uno start è prima di uno stop (Logica DB)

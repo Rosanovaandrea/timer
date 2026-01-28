@@ -21,11 +21,11 @@ class TimerUtilsImplUnitTest {
     final String TMP_DIR = "tmpDir";
     final String SYSTEM_DIR = "systemDir";
     final String SERVICE_FILE_NAME = "alarm";
-    private static final String DAEMON_RELOAD = "/usr/bin/systemctl --user daemon-reload";
+    private static final String DAEMON_RELOAD = "systemctl --user daemon-reload";
     final String[] FILE_STATIC = {"[Unit]\nDescription=Custom Timer for ", "\n\n[Timer]\nOnCalendar= *-*-* ", "\nUnit=", "\n\n[Install]\nWantedBy=timers.target\n"};
 
-    final String CMD_ACTIVATE = "/usr/bin/systemctl --user enable 123.timer && /usr/bin/systemctl --user start 123.timer";
-    final String CMD_DEACTIVATE = "/usr/bin/systemctl --user stop 123.timer && /usr/bin/systemctl --user disable 123.timer";
+    final String CMD_ACTIVATE = "systemctl --user enable --now 123.timer";
+    final String CMD_DEACTIVATE = "systemctl --user disable --now 123.timer";
 
     @Spy
     TimerUtilsImpl timerUtilsImpl = new TimerUtilsImpl(TMP_DIR,SYSTEM_DIR,SERVICE_FILE_NAME,false);

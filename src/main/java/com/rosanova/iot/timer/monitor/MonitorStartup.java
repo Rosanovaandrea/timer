@@ -7,6 +7,8 @@ import com.rosanova.iot.timer.error.UserServiceException;
 import com.rosanova.iot.timer.monitor.repository.MonitorRepository;
 import com.rosanova.iot.timer.utils.TimerUtils;
 import jakarta.annotation.PostConstruct;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,6 +16,7 @@ import java.beans.Transient;
 import java.time.Duration;
 
 
+@Component
 public class MonitorStartup {
     private final MonitorRepository repository;
     private final TimerUtils monitorTurnOnUtils;
@@ -21,7 +24,7 @@ public class MonitorStartup {
     private static final int START = 8 * 60 * 60 * 1000; //08:00:00
     private static final int STOP = 20 * 60 * 60 * 1000; //20:00:00
 
-    public MonitorStartup(MonitorRepository repository, TimerUtils monitorTurnOnUtils, TimerUtils monitorTurnOffUtils) {
+    public MonitorStartup(@Autowired MonitorRepository repository, @Qualifier("monitorOn") TimerUtils monitorTurnOnUtils, @Qualifier("monitorShutdown") TimerUtils monitorTurnOffUtils) {
         this.repository = repository;
         this.monitorTurnOnUtils = monitorTurnOnUtils;
         this.monitorTurnOffUtils = monitorTurnOffUtils;
@@ -32,17 +35,18 @@ public class MonitorStartup {
     public Result createMonitor() {
 
         int step = 0;
+
         Monitor monitor;
 
         try {
-             monitor = repository.getMonitor();
+             if(repository.existsMonitor()) return Result.SUCCESS;
         }catch (RuntimeException e) {
             System.err.println("ERRORE DATABASE CONTROLLO ESISTENZA MONITOR:" + e.getMessage());
-            throw new MonitorServiceException("errore startup Monitor");
+            throw new MonitorServiceException("errore startup Monitor"+e.getMessage());
         }
 
 
-        if (monitor != null) return Result.SUCCESS;
+
 
         monitor = new Monitor(0,START,STOP);
 
@@ -87,6 +91,8 @@ public class MonitorStartup {
 
             step++;
 
+            Thread.sleep(1000);
+
             if (monitorTurnOnUtils.activateSystemdTimer(startString) == Result.ERROR)
                 throw new MonitorServiceException("errore attivazione timer start");
 
@@ -106,7 +112,7 @@ public class MonitorStartup {
 
         } catch (Exception e) {
             System.err.println("ERRORE INIZIALIZZAZIONE MONITOR: "+e.getMessage());
-            throw new MonitorServiceException("errore startup Monitor");
+            throw new MonitorServiceException("errore startup Monitor" + e.getMessage()+startString);
         } finally {
             if (step < 7) {
                 try {

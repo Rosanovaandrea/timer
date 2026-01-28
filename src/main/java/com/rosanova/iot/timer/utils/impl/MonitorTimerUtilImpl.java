@@ -6,10 +6,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Service
-@Qualifier("timerDefault")
+@Qualifier("monitorOn")
 public class MonitorTimerUtilImpl extends TimerUtilsImpl implements TimerUtils {
 
-    public MonitorTimerUtilImpl(@Value("${tmp.directory}" )String tmpDir,@Value("${systemd.directory}" )String systemdTimerDir, @Value("${systemd.monitor.service.name}") String serviceFileName) {
+    public MonitorTimerUtilImpl(@Value("${tmp.directory}" )String tmpDir,@Value("${systemd.monitor.directory}" )String systemdTimerDir, @Value("${systemd.monitor.service.on.name}") String serviceFileName) {
         super(tmpDir, systemdTimerDir, serviceFileName,false);
     }
 }

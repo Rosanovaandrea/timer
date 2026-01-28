@@ -6,6 +6,10 @@ import com.rosanova.iot.timer.monitor.repository.MonitorRepository;
 import com.rosanova.iot.timer.timer.repository.TimerRepository;
 import com.rosanova.iot.timer.utils.TimerUtils;
 import com.rosanova.iot.timer.utils.impl.HashMapInt;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -18,7 +22,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
-
+@Component
 public class CleanUp {
 
     private final ExecutorService threadPool;
@@ -38,13 +42,13 @@ public class CleanUp {
     private final TimerUtils fileSystemUtils;
 
     public CleanUp(ReentrantLock ioLock,
-                   MonitorRepository monitorRepository,
-                   TimerRepository timerRepository,
-                   String tmpDir,
-                   String timerDirectory,
-                   String monitorDirectory,
+                   @Autowired MonitorRepository monitorRepository,
+                   @Autowired TimerRepository timerRepository,
+                   @Value("${tmp.directory}") String tmpDir,
+                   @Value("${systemd.directory}") String timerDirectory,
+                   @Value("${systemd.monitor.directory}") String monitorDirectory,
                    ExecutorService executor,
-                   TimerUtils fileSystemUtils) {
+                   @Qualifier("timerDefault") TimerUtils fileSystemUtils) {
 
         this.monitorRepository = monitorRepository;
         this.timerRepository = timerRepository;
@@ -57,6 +61,8 @@ public class CleanUp {
 
     }
 
+
+    @Scheduled(cron = "0 0 21 * * *")
     public void cleanUpMethod() {
         boolean lock = false;
         try {

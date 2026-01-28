@@ -6,22 +6,62 @@ import com.rosanova.iot.timer.monitor.Monitor;
 import com.rosanova.iot.timer.monitor.repository.MonitorRepository;
 import com.rosanova.iot.timer.utils.TimerUtils;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
 
-
+@Service
 public class MonitorServiceImpl {
 
     private final MonitorRepository repository;
     private final TimerUtils monitorTurnOnUtils;
     private final TimerUtils monitorTurnOffUtils;
+    private final ReentrantLock sharedLock;
 
-    public MonitorServiceImpl(MonitorRepository repository, TimerUtils monitorTurnOnUtils, TimerUtils monitorTurnOffUtils) {
+    public MonitorServiceImpl(ReentrantLock sharedLock, MonitorRepository repository, @Qualifier("monitorOn") TimerUtils monitorTurnOnUtils, @Qualifier("monitorShutdown") TimerUtils monitorTurnOffUtils) {
         this.repository = repository;
         this.monitorTurnOnUtils = monitorTurnOnUtils;
         this.monitorTurnOffUtils = monitorTurnOffUtils;
+        this.sharedLock = sharedLock;
+    }
+
+    public Result updateMonitorStartSynchronized( int start ){
+
+        boolean resultLock = false;
+        try {
+            resultLock = sharedLock.tryLock(100L, TimeUnit.MILLISECONDS);
+            if(!resultLock) return Result.ERROR;
+            updateMonitorStart(start);
+            return Result.SUCCESS;
+        }catch (Exception e){
+            return Result.ERROR;
+        } finally {
+            if(resultLock) sharedLock.unlock();
+        }
+
+    }
+
+    public Result updateMonitorStopSynchronized( int stop ){
+
+        boolean resultLock = false;
+
+        try {
+            resultLock = sharedLock.tryLock(100L, TimeUnit.MILLISECONDS);
+            if( ! resultLock ) return Result.ERROR;
+            updateMonitorStop(stop);
+            return Result.SUCCESS;
+        }catch (Exception e){
+            return Result.ERROR;
+        } finally {
+            if ( resultLock ) sharedLock.unlock();
+        }
+
     }
 
     public Result updateMonitorStart(int start) {
@@ -122,6 +162,10 @@ public class MonitorServiceImpl {
             }
 
         }
+    }
+
+    public Monitor getMonitor(){
+        return repository.getMonitor();
     }
 
     public Result updateMonitorStop(int stop) {

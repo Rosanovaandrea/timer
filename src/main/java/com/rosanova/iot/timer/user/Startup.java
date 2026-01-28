@@ -12,7 +12,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.net.UnknownServiceException;
 
-@Component
 public class Startup {
     private static final String USERNAME = "root";
     private static final String RESET = "RESET";

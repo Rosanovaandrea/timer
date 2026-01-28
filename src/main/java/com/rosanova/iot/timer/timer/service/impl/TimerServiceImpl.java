@@ -14,6 +14,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
 
 @Service
 public class TimerServiceImpl implements TimerService {
@@ -26,9 +28,46 @@ public class TimerServiceImpl implements TimerService {
 
     private final int MAX_MILLS_DAY = 86_400_000;
 
-    public TimerServiceImpl(@Autowired  TimerRepository repository, @Qualifier("timerDefault") TimerUtils timerUtils) {
+    private final ReentrantLock sharedLock;
+
+    public TimerServiceImpl(@Autowired  TimerRepository repository, @Qualifier("timerDefault") TimerUtils timerUtils, @Autowired ReentrantLock sharedLock) {
         this.repository = repository;
         this.timerUtils = timerUtils;
+        this.sharedLock = sharedLock;
+    }
+
+    public Result insertTimerSynchronized(String name, int time, int symphony){
+        boolean lock = false;
+
+        try {
+            lock = sharedLock.tryLock(100L, TimeUnit.MILLISECONDS);
+
+            if(!lock) return Result.ERROR;
+
+            return insertTimer(name, time, symphony);
+        }catch (Exception e){
+                System.err.println("errore inserimento timer" + e.getMessage());
+                return Result.ERROR;
+        }finally {
+            if(lock) sharedLock.unlock();
+        }
+    }
+
+    public Result removeTimerSynchronized(long id){
+        boolean lock = false;
+
+        try {
+            lock =sharedLock.tryLock(100L, TimeUnit.MILLISECONDS);
+
+            if(!lock) return Result.ERROR;
+
+            return removeTimer(id);
+        }catch (Exception e){
+            System.err.println("errore inserimento timer" + e.getMessage());
+            return Result.ERROR;
+        }finally {
+            if(lock) sharedLock.unlock();
+        }
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -81,6 +120,8 @@ public class TimerServiceImpl implements TimerService {
 
             if (result == Result.ERROR) throw new RuntimeException();
 
+            Thread.sleep(100);
+
 
             result = timerUtils.activateSystemdTimer(nameFile);
 
@@ -116,7 +157,7 @@ public class TimerServiceImpl implements TimerService {
 
     }
 
-    @Override
+
     @Transactional(rollbackFor = Exception.class)
     public Result removeTimer(long id) {
         Result result = Result.SUCCESS;
@@ -128,13 +169,17 @@ public class TimerServiceImpl implements TimerService {
 
         if (timerToDelete == null) throw new TimerServiceException("errore timer non trovato");
 
-        filename = String.valueOf(timerToDelete.getEndTime());
+        int median = timerToDelete.getStartTime() == 0 ? timerToDelete.getEndTime() - 20_000 : timerToDelete.getStartTime() + 20_000;
+
+        filename = String.valueOf(median);
         repository.deleteById(id);
 
         result = timerUtils.deactivateSystemdTimer(filename);
         step++;
 
         if (result == Result.ERROR) throw new TimerServiceException("timer non disattivato");
+
+        Thread.sleep(100);
 
         result = timerUtils.deleteSystemdTimerUnit(filename);
         step++;
