@@ -58,7 +58,7 @@ public class Startup {
 
         User root = new User();
         root.setUsername(USERNAME);
-        root.setPassword(password);
+        root.setPassword(hashPassword(password));
 
         repository.insertUser(root);
 

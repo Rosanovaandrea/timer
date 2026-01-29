@@ -1,6 +1,5 @@
 package com.rosanova.iot.timer.user.startup;
 
-
 import com.rosanova.iot.timer.error.Result;
 import com.rosanova.iot.timer.user.Startup;
 import com.rosanova.iot.timer.user.User;
@@ -11,6 +10,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.bcrypt.BCrypt; // Importante per la verifica
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -37,19 +37,25 @@ class startupUnitTest {
     }
 
     @Test
-    @DisplayName("initUserRoot: successo se la password è valida")
+    @DisplayName("initUserRoot: successo se la password è valida e viene criptata")
     void initUserRoot_Success() {
-        startup = new Startup("passwordValida", "NO_RESET", repository);
+        String passwordChiaro = "passwordValida";
+        startup = new Startup(passwordChiaro, "NO_RESET", repository);
 
-        Result result = startup.initUserRoot("passwordValida");
+        Result result = startup.initUserRoot(passwordChiaro);
 
         assertEquals(Result.SUCCESS, result);
 
-        // Verifichiamo che l'utente creato sia corretto
+        // Catturiamo l'utente salvato per ispezionare la password
         ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
         verify(repository).insertUser(userCaptor.capture());
-        assertEquals("root", userCaptor.getValue().getUsername());
-        assertEquals("passwordValida", userCaptor.getValue().getPassword());
+
+        User savedUser = userCaptor.getValue();
+        assertEquals("root", savedUser.getUsername());
+
+        // MODIFICA: Verifichiamo che la password NON sia in chiaro e che sia un hash valido
+        assertNotEquals(passwordChiaro, savedUser.getPassword());
+        assertTrue(BCrypt.checkpw(passwordChiaro, savedUser.getPassword()), "L'hash della password non corrisponde alla password in chiaro");
     }
 
     // --- TEST METODO init() - Analisi degli Stati ---
@@ -57,24 +63,19 @@ class startupUnitTest {
     @Test
     @DisplayName("init: crea root se il database è vuoto")
     void init_DatabaseEmpty_CreatesRoot() {
-        // Mock: database vuoto
         when(repository.findNumberOfUsers()).thenReturn(0);
-
-        // Istanza con password valida
         startup = new Startup("rootPassword", "NO_RESET", repository);
 
-        // Eseguiamo manualmente il metodo annotato con @PostConstruct
         startup.init();
 
+        // Verifichiamo che l'utente creato abbia lo username corretto
         verify(repository).insertUser(argThat(u -> u.getUsername().equals("root")));
     }
 
     @Test
     @DisplayName("init: non fa nulla se utenti presenti e reset disabilitato")
     void init_UsersPresent_NoReset_DoesNothing() {
-        // Mock: utenti già presenti
         when(repository.findNumberOfUsers()).thenReturn(1);
-
         startup = new Startup("rootPassword", "NO_RESET", repository);
 
         startup.init();
@@ -83,33 +84,28 @@ class startupUnitTest {
     }
 
     @Test
-    @DisplayName("init: forza la creazione/reset se richiesto dal flag RESET")
+    @DisplayName("init: forza il reset e cripta la nuova password se richiesto")
     void init_UsersPresent_WithResetFlag_CreatesRoot() {
-        // Mock: utenti presenti ma vogliamo resettare
         when(repository.findNumberOfUsers()).thenReturn(5);
-
-        startup = new Startup("newRootPassword", "RESET", repository);
+        String newPassword = "newRootPassword";
+        startup = new Startup(newPassword, "RESET", repository);
 
         startup.init();
 
-        // Verifica che initUserRoot venga chiamato nonostante la presenza di utenti
-        verify(repository).insertUser(argThat(u -> u.getPassword().equals("newRootPassword")));
+        // MODIFICA: Usiamo checkpw all'interno del matcher argThat
+        verify(repository).insertUser(argThat(u ->
+                u.getUsername().equals("root") && BCrypt.checkpw(newPassword, u.getPassword())
+        ));
     }
 
     @Test
     @DisplayName("init: cattura l'eccezione se la password di reset è troppo corta")
     void init_ExceptionCatching() {
-        // Database vuoto, ma password configurata male (es. 3 caratteri)
         when(repository.findNumberOfUsers()).thenReturn(0);
-
-        // Passiamo una password non valida (< 8 caratteri)
         startup = new Startup("123", "NO_RESET", repository);
 
-        // Non deve lanciare eccezioni verso l'esterno (le logga internamente)
         assertDoesNotThrow(() -> startup.init());
 
-        // Verifichiamo che non sia stato inserito nulla a causa dell'errore
         verify(repository, never()).insertUser(any(User.class));
     }
-
 }

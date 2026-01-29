@@ -29,8 +29,8 @@ class UserServiceIntegrtionTest {
 
     private UserServiceImpl userService;
 
-    private final String USERNAME = "integration.user";
-    private final String PASSWORD_RAW = "password12345";
+    private final String USERNAME = "root";
+    private final String PASSWORD_RAW = "12345678";
 
     @BeforeEach
     void setUp() {

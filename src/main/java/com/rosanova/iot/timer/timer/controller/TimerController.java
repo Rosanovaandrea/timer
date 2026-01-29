@@ -22,29 +22,24 @@ public class TimerController {
 
     @PostMapping
     public ResponseEntity<?> createTimer(@RequestBody @Valid TimerInsertDto timer) {
-        try {
+
             Result result = timerService.insertTimerSynchronized(timer.getName(), timer.getTime(), timer.getSymphonyDuration());
             if (result == Result.SUCCESS) {
                 return ResponseEntity.status(HttpStatus.CREATED).body("Timer creato: " + timer.getName());
             }
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Errore logico durante l'inserimento");
-        } catch (Exception e) {
-            // Cattura errori imprevisti (es. database down)
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Errore Generico: " + e.getMessage());
-        }
+
     }
 
     @DeleteMapping()
     public ResponseEntity<?> deleteTimer(@RequestParam Long id) {
-        try {
+
             Result result = timerService.removeTimerSynchronized(id);
             if (result == Result.SUCCESS) {
                 return ResponseEntity.ok("Timer " + id + " rimosso correttamente");
             }
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Errore durante la rimozione");
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Errore: " + e.getMessage());
-        }
+
     }
 
     @GetMapping

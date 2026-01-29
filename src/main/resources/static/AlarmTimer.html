@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Gestione Timer IoT - Validazione DB</title>
+    <style>
+        :root { --primary: #007bff; --danger: #dc3545; --bg: #f4f7f6; --secondary: #6c757d; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); display: flex; flex-direction: column; align-items: center; padding: 20px; }
+
+        /* Stile Navigazione */
+        .nav-menu {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            width: 100%;
+            max-width: 650px;
+        }
+        .btn-nav {
+            flex: 1;
+            text-decoration: none;
+            background: white;
+            color: #333;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            border: 1px solid #eee;
+            transition: all 0.2s;
+        }
+        .btn-nav:hover { background: #f0f0f0; border-color: var(--primary); color: var(--primary); }
+
+        .container { background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 650px; }
+        h2, h3 { color: #333; border-bottom: 2px solid #eee; padding-bottom: 8px; margin-top: 0; }
+
+        /* Lista */
+        .section-list { margin-bottom: 30px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #eee; }
+        .btn-del { background: var(--danger); color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
+
+        /* Form */
+        .form-box { background: #fafafa; padding: 20px; border-radius: 8px; border: 1px solid #eee; }
+        .field { margin-bottom: 12px; }
+        label { display: block; margin-bottom: 4px; font-weight: bold; font-size: 0.9rem; }
+        input { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        .btn-save { background: var(--primary); color: white; border: none; width: 100%; padding: 12px; border-radius: 4px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+
+        /* Notifiche */
+        #msg { margin-top: 15px; padding: 10px; border-radius: 4px; display: none; text-align: center; }
+        .err { background: #f8d7da; color: #721c24; display: block; }
+        .ok { background: #d4edda; color: #155724; display: block; }
+    </style>
+</head>
+<body>
+
+<nav class="nav-menu">
+    <a href="AlarmTimer.html" class="btn-nav">Timer</a>
+    <a href="MonitorTimer.html" class="btn-nav">Monitor</a>
+    <a href="#" class="btn-nav">Cambio Password</a>
+</nav>
+
+<div class="container">
+    <div class="section-list">
+        <h2>Timer Attivi (<span id="count">0</span>/40)</h2>
+        <table>
+            <thead>
+            <tr>
+                <th>Nome</th>
+                <th>Orario Reale</th>
+                <th>Azione</th>
+            </tr>
+            </thead>
+            <tbody id="timer-table"></tbody>
+        </table>
+    </div>
+
+    <div class="form-box">
+        <h3>Nuovo Timer</h3>
+        <div class="field">
+            <label>Nome:</label>
+            <input type="text" id="name" placeholder="Nome del timer">
+        </div>
+        <div class="field">
+            <label>Orario Desiderato:</label>
+            <input type="time" id="time" step="1">
+        </div>
+        <div class="field">
+            <label>Durata Sinfonia (1-30):</label>
+            <input type="number" id="dur" value="1" min="1" max="30">
+        </div>
+        <button class="btn-save" onclick="validateAndSend()">Salva Timer</button>
+        <div id="msg"></div>
+    </div>
+</div>
+
+<script>
+    // ... (Mantiene tutto il tuo script JavaScript originale)
+    const API = "/authenticated/api/v1/timers";
+    const OFFSET = 20000;
+    let cachedTimers = [];
+
+    function getRealDisplayTime(t) {
+        return t.startTime === 0 ? (t.endTime - OFFSET) : (t.startTime + OFFSET);
+    }
+
+    function findCollision(newStart, newEnd) {
+        for (let t of cachedTimers) {
+            const overlaps = !(newEnd < t.startTime || newStart > t.endTime);
+            if (overlaps) {
+                return t.timerName || `Timer ${t.id}`;
+            }
+        }
+        return null;
+    }
+
+    async function load() {
+        try {
+            const res = await fetch(API);
+            if (res.status === 401 || res.status === 403) return;
+
+            cachedTimers = await res.json();
+            document.getElementById('count').innerText = cachedTimers.length;
+
+            document.getElementById('timer-table').innerHTML = cachedTimers.map(t => `
+                <tr>
+                    <td>${t.timerName}</td>
+                    <td><strong>${msToH(getRealDisplayTime(t))}</strong></td>
+                    <td><button class="btn-del" onclick="deleteT(${t.id})">Elimina</button></td>
+                </tr>
+            `).join('');
+        } catch (e) { showMsg("Errore caricamento dati", true); }
+    }
+
+    async function validateAndSend() {
+        const name = document.getElementById('name').value;
+        const timeVal = document.getElementById('time').value;
+        const dur = document.getElementById('dur').value;
+
+        if (!name || !timeVal) return showMsg("Compila tutti i campi", true);
+        if(dur < 1 || dur > 30) return showMsg("la durata deve essere compresa tra 1s e 30s", true);
+        if (cachedTimers.length >= 40) return showMsg("Limite massimo raggiunto", true);
+
+        const inputMs = hToMs(timeVal);
+        const newStart = inputMs - OFFSET;
+        const newEnd = inputMs + OFFSET;
+
+        const collidingName = findCollision(newStart, newEnd);
+        if (collidingName) {
+            return showMsg(`Sovrapposizione con: ${collidingName}`, true);
+        }
+
+        try {
+            const res = await fetch(API, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: name + " " +parseInt(dur) + "s",
+                    time: inputMs,
+                    symphonyDuration: parseInt(dur)
+                })
+            });
+
+            if (res.status === 401 || res.status === 403) window.location.href='index.html';
+            if (res.ok) {
+                location.reload();
+            } else {
+                showMsg(await res.text(), true);
+            }
+        } catch (e) { showMsg("Errore di rete", true); }
+    }
+
+    async function deleteT(id) {
+        try {
+            const res = await fetch(`${API}?id=${id}`, { method: 'DELETE' });
+            if (res.ok) location.reload();
+            if (res.status === 401 || res.status === 403) window.location.href='index.html';
+        } catch (e) { showMsg("Errore eliminazione", true); }
+    }
+
+    function hToMs(t) {
+        const parts = t.split(':').map(Number);
+        const h = parts[0], m = parts[1], s = parts[2] || 0;
+        return (h * 3600000) + (m * 60000) + (s * 1000);
+    }
+
+    function msToH(ms) {
+        if (ms < 0) ms += 86400000;
+        return new Date(ms).toISOString().substr(11, 8);
+    }
+
+    function showMsg(txt, isErr) {
+        const m = document.getElementById('msg');
+        m.innerText = txt;
+        m.className = isErr ? 'err' : 'ok';
+        m.style.display = 'block';
+        setTimeout(() => m.style.display = 'none', 5000);
+    }
+
+    window.onload = load;
+</script>
+</body>
+</html>

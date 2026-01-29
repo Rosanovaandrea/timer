@@ -29,10 +29,14 @@ public class SecurityFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) {
 
+
+
         int padding = 0;
         if (request.getContextPath() != null && !request.getContextPath().isEmpty()) {padding = request.getContextPath().length();}
 
         try {
+
+
             if (!request.getRequestURI().regionMatches(padding ,URL_PROTECTED_PATH, 0, URL_PROTECTED_PATH.length())) {
                 filterChain.doFilter(request, response);
                 return;

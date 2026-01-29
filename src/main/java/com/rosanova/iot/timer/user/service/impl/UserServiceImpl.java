@@ -8,8 +8,10 @@ import com.rosanova.iot.timer.user.service.UserService;
 import com.rosanova.iot.timer.utils.HMACSHA256SignatureUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCrypt;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
@@ -43,7 +45,7 @@ public class UserServiceImpl implements UserService {
             timeToken.append(time);
 
             loginReturnDto.setResult(Result.SUCCESS);
-            loginReturnDto.setToken(hashToken.computeHMACSHA256(timeToken.toString()));
+            loginReturnDto.setToken(timeToken+hashToken.computeHMACSHA256(timeToken.toString()));
 
             return loginReturnDto;
 

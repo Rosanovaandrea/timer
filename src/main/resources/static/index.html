@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IoT Timer - Login</title>
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --error-color: #dc2626;
+            --success-color: #16a34a;
+            --bg-color: #f3f4f6;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .login-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+
+        h2 {
+            text-align: center;
+            color: #1f2937;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #4b5563;
+        }
+
+        input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            box-sizing: border-box; /* Evita che il padding sfori la larghezza */
+        }
+
+        button {
+            width: 100%;
+            padding: 0.75rem;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background-color: #1d4ed8;
+        }
+
+        #message {
+            margin-top: 1rem;
+            padding: 0.75rem;
+            border-radius: 4px;
+            display: none;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+
+        .error { background-color: #fee2e2; color: var(--error-color); border: 1px solid #fecaca; }
+        .success { background-color: #dcfce7; color: var(--success-color); border: 1px solid #bbf7d0; }
+    </style>
+</head>
+<body>
+
+<div class="login-card">
+    <h2>Accesso IoT Timer</h2>
+    <form id="loginForm">
+        <div class="form-group">
+            <label for="username">Username</label>
+            <input type="text" id="username" placeholder="Inserisci username" required>
+        </div>
+        <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" placeholder="Inserisci password" required>
+        </div>
+        <button type="submit">Accedi</button>
+    </form>
+    <div id="message"></div>
+</div>
+
+<script>
+    const loginForm = document.getElementById('loginForm');
+    const messageDiv = document.getElementById('message');
+
+    function showMessage(text, isError) {
+        messageDiv.textContent = text;
+        messageDiv.style.display = 'block';
+        messageDiv.className = isError ? 'error' : 'success';
+    }
+
+    loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        messageDiv.style.display = 'none';
+
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+
+        // --- CONTROLLI LATO CLIENT ---
+        if (username.length < 4) {
+            showMessage("L'username deve avere almeno 4 caratteri", true);
+            return;
+        }
+
+        if (password.length < 8) {
+            showMessage("La password deve avere almeno 8 caratteri", true);
+            return;
+        }
+
+        try {
+            // Chiamata al backend
+            const response = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ username, password })
+            });
+
+            const data = await response.json();
+
+            // --- GESTIONE RISPOSTE BACKEND ---
+
+        if (response.ok) {
+        window.location.href = '/AlarmTimer.html';
+
+        }else if (response.status === 401) {
+        // Unauthorized: password o username sbagliati
+        showMessage("Credenziali errate. Riprova.", true);
+
+        } else if (response.status === 400) {
+        // Bad Request: i dati inviati non sono nel formato corretto
+        showMessage("Richiesta non valida. Controlla i campi inseriti.", true);
+
+        } else if (response.status >= 500) {
+        // Server Error: il database è giù o c'è un bug nel backend
+        showMessage("Errore del server. Riprova più tardi.", true);
+
+        } else {
+        // Gestione generica per altri codici (es. 404, 403)
+            showMessage("Si è verificato un errore inaspettato.", true);
+        }
+
+        } catch (error) {
+            console.error("Errore di rete:", error);
+            showMessage("Impossibile connettersi al server.", true);
+        }
+    });
+</script>
+
+</body>
+</html>

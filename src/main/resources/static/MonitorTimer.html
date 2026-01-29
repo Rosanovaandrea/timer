@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monitor IoT Control Panel</title>
+    <style>
+        :root { --primary: #007bff; --success: #28a745; --danger: #dc3545; --bg: #f4f7f6; }
+
+        /* Layout per centraggio con Navigazione */
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: var(--bg);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 50px; /* Spazio per la nav */
+            margin: 0;
+            min-height: 100vh;
+        }
+
+        /* Stile Navigazione (Identico all'altro file) */
+        .nav-menu {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            width: 100%;
+            max-width: 450px;
+        }
+        .btn-nav {
+            flex: 1;
+            text-decoration: none;
+            background: white;
+            color: #333;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            border: 1px solid #eee;
+            transition: all 0.2s;
+        }
+        .btn-nav:hover { background: #f0f0f0; border-color: var(--primary); color: var(--primary); }
+
+        .container { background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 100%; max-width: 450px; box-sizing: border-box; }
+        h2 { text-align: center; color: #333; margin-top: 0; border-bottom: 2px solid var(--primary); padding-bottom: 10px; }
+        .status-card { background: #e9ecef; padding: 15px; border-radius: 8px; margin-bottom: 25px; margin-top: 20px; }
+        .status-item { display: flex; justify-content: space-between; margin: 5px 0; font-size: 1.1rem; }
+        .status-item span:last-child { font-weight: bold; color: var(--primary); }
+        .input-group { margin-bottom: 20px; border-top: 1px solid #eee; padding-top: 15px; }
+        label { display: block; margin-bottom: 8px; font-weight: 600; color: #555; }
+        input[type="time"] { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; margin-bottom: 10px; font-size: 1rem; }
+        button { width: 100%; padding: 12px; border: none; border-radius: 5px; color: white; font-weight: bold; cursor: pointer; transition: transform 0.1s; }
+        button:active { transform: scale(0.98); }
+        .btn-start { background-color: var(--success); }
+        .btn-stop { background-color: var(--danger); }
+        #message { margin-top: 20px; padding: 10px; border-radius: 5px; text-align: center; min-height: 20px; display: none; font-size: 0.9rem; }
+        .error-msg { background: #f8d7da; color: #721c24; display: block !important; }
+    </style>
+</head>
+<body>
+
+<nav class="nav-menu">
+    <a href="AlarmTimer.html" class="btn-nav">Timer</a>
+    <a href="MonitorTimer.html" class="btn-nav">Monitor</a>
+    <a href="#" class="btn-nav">Cambio Password</a>
+</nav>
+
+<div class="container">
+    <h2>IoT Monitor Control</h2>
+
+    <div class="status-card">
+        <div class="status-item"><span>Start Attuale:</span><span id="display-start">--:--:--</span></div>
+        <div class="status-item"><span>Stop Attuale:</span><span id="display-stop">--:--:--</span></div>
+    </div>
+
+    <div class="input-group">
+        <label for="time-start">Imposta Start</label>
+        <input type="time" id="time-start" step="1">
+        <button class="btn-start" onclick="processUpdate('start')">AGGIORNA START</button>
+    </div>
+
+    <div class="input-group">
+        <label for="time-stop">Imposta Stop</label>
+        <input type="time" id="time-stop" step="1">
+        <button class="btn-stop" onclick="processUpdate('stop')">AGGIORNA STOP</button>
+    </div>
+
+    <div id="message"></div>
+</div>
+
+<script>
+    const API_BASE = "/api/monitor";
+    const GAP_MS = 40000;
+    const MIN_MS = 1000;
+    const MAX_MS = 86400000;
+
+    let currentState = { start: 0, stop: 0 };
+
+    async function init() {
+        try {
+            const res = await fetch(`${API_BASE}/monitor`);
+            if (res.status === 401 || res.status === 403) return (window.location.href = "login-fittizio.html");
+
+            if (res.ok) {
+                currentState = await res.json();
+                document.getElementById('display-start').innerText = msToHHMMSS(currentState.start);
+                document.getElementById('display-stop').innerText = msToHHMMSS(currentState.stop);
+            }
+        } catch (e) { console.error("Errore inizializzazione", e); }
+    }
+
+    async function processUpdate(type) {
+        const input = document.getElementById(`time-${type}`);
+        if (!input.value) return showError("Inserisci un orario valido.");
+
+        const newValue = timeToMs(input.value);
+
+        if (newValue < MIN_MS || newValue > MAX_MS) {
+            return showError("L'orario deve essere tra 1 secondo e 24 ore.");
+        }
+
+        if (type === 'start') {
+            if (newValue > (currentState.stop - GAP_MS)) {
+                return showError("Lo Start deve essere almeno 40 secondi prima dello Stop.");
+            }
+        } else {
+            if (newValue < (currentState.start + GAP_MS)) {
+                return showError("Lo Stop deve essere almeno 40 secondi dopo lo Start.");
+            }
+        }
+
+        try {
+            const response = await fetch(`${API_BASE}/${type}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ value: newValue })
+            });
+
+            if (response.status === 401 || response.status === 403) {
+                window.location.href = "index.html";
+                return;
+            }
+
+            if (response.ok) {
+                window.location.reload();
+            } else {
+                const errMsg = await response.text();
+                showError(errMsg || "Errore durante l'aggiornamento.");
+            }
+        } catch (err) {
+            showError("Server non raggiungibile.");
+        }
+    }
+
+    function timeToMs(t) {
+        const parts = t.split(':').map(Number);
+        const h = parts[0], m = parts[1], s = parts[2] || 0;
+        return (h * 3600000) + (m * 60000) + (s * 1000);
+    }
+
+    function msToHHMMSS(ms) {
+        if (ms < 0) ms += 86400000;
+        return new Date(ms).toISOString().substr(11, 8);
+    }
+
+    function showError(txt) {
+        const msgDiv = document.getElementById('message');
+        msgDiv.innerText = txt;
+        msgDiv.className = 'error-msg';
+        setTimeout(() => msgDiv.className = '', 4000);
+    }
+
+    window.onload = init;
+</script>
+
+</body>
+</html>
