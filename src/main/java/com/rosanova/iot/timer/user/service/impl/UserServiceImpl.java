@@ -17,6 +17,7 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository repository;
     private final HMACSHA256SignatureUtil hashToken;
+    private final String USERNAME = "root";
 
     @Override
     @Transactional
@@ -54,19 +55,19 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public Result changePassword(Long id, String oldPassword, String newPassword) {
+    public Result changePassword(String oldPassword, String newPassword) {
 
-        User user = repository.findById(id);
+        User user = repository.getByUsername(USERNAME);
 
         if (user == null) {
-            return Result.ERROR;
+            return Result.BAD_REQUEST;
         }
 
         if (!checkPassword(oldPassword, user.getPassword())) {
-            return Result.ERROR;
+            return Result.BAD_REQUEST;
         }
 
-        repository.updateUser(id,hashPassword(newPassword));
+        repository.updateUser(user.getId(), hashPassword(newPassword));
         return Result.SUCCESS;
 
     }

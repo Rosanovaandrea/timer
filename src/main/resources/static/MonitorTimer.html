@@ -63,7 +63,7 @@
 <nav class="nav-menu">
     <a href="AlarmTimer.html" class="btn-nav">Timer</a>
     <a href="MonitorTimer.html" class="btn-nav">Monitor</a>
-    <a href="#" class="btn-nav">Cambio Password</a>
+    <a href="ChangePassword.html" class="btn-nav">Cambio Password</a>
 </nav>
 
 <div class="container">
@@ -90,7 +90,7 @@
 </div>
 
 <script>
-    const API_BASE = "/api/monitor";
+    const API_BASE = "/authenticated/api/monitor";
     const GAP_MS = 40000;
     const MIN_MS = 1000;
     const MAX_MS = 86400000;
@@ -100,7 +100,7 @@
     async function init() {
         try {
             const res = await fetch(`${API_BASE}/monitor`);
-            if (res.status === 401 || res.status === 403) return (window.location.href = "login-fittizio.html");
+            if (res.status === 401 || res.status === 403) return (window.location.href = "index.html");
 
             if (res.ok) {
                 currentState = await res.json();

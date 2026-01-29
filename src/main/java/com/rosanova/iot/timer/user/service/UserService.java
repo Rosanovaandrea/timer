@@ -5,5 +5,5 @@ import com.rosanova.iot.timer.user.dto.LoginReturnDto;
 
 public interface UserService {
     LoginReturnDto login(String username, String password);
-    Result changePassword(Long id, String oldPassword, String NewPassword);
+    Result changePassword( String oldPassword, String NewPassword);
 }

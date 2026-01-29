@@ -57,7 +57,7 @@
 <nav class="nav-menu">
     <a href="AlarmTimer.html" class="btn-nav">Timer</a>
     <a href="MonitorTimer.html" class="btn-nav">Monitor</a>
-    <a href="#" class="btn-nav">Cambio Password</a>
+    <a href="ChangePassword.html" class="btn-nav">Cambio Password</a>
 </nav>
 
 <div class="container">
@@ -117,7 +117,7 @@
     async function load() {
         try {
             const res = await fetch(API);
-            if (res.status === 401 || res.status === 403) return;
+             if (res.status === 401 || res.status === 403) window.location.href='index.html';
 
             cachedTimers = await res.json();
             document.getElementById('count').innerText = cachedTimers.length;

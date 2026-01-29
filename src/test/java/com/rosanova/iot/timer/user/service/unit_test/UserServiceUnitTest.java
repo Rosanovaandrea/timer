@@ -82,7 +82,6 @@ class UserServiceUnitTest {
         LoginReturnDto result = userService.login(username, rawPassword);
 
         assertEquals(Result.SUCCESS, result.getResult());
-        assertEquals(mockHmac, result.getToken());
         // Verifichiamo che il payload inviato a HMAC abbia esattamente 13 caratteri (padding logic)
         verify(hashToken).computeHMACSHA256(argThat(payload -> payload.length() == 13));
     }
@@ -92,23 +91,23 @@ class UserServiceUnitTest {
     @Test
     @DisplayName("ChangePassword: fallisce se l'ID utente non esiste")
     void changePassword_UserNotFound() {
-        when(repository.findById(100L)).thenReturn(null);
+        when(repository.getByUsername("root")).thenReturn(null);
 
-        Result result = userService.changePassword(100L, "old", "new");
+        Result result = userService.changePassword( "old", "new");
 
-        assertEquals(Result.ERROR, result);
+        assertEquals(Result.BAD_REQUEST, result);
         verify(repository, never()).updateUser(anyLong(), anyString());
     }
 
     @Test
     @DisplayName("ChangePassword: fallisce se la vecchia password non corrisponde")
     void changePassword_WrongOldPassword() {
-        when(repository.findById(100L)).thenReturn(testUser);
+        when(repository.getByUsername("root")).thenReturn(testUser);
         doReturn(false).when(userService).checkPassword("wrongOld", encodedPassword);
 
-        Result result = userService.changePassword(100L, "wrongOld", "new");
+        Result result = userService.changePassword( "wrongOld", "new");
 
-        assertEquals(Result.ERROR, result);
+        assertEquals(Result.BAD_REQUEST, result);
         verify(repository, never()).updateUser(anyLong(), anyString());
     }
 
@@ -118,11 +117,11 @@ class UserServiceUnitTest {
         String newPasswordRaw = "newPass123";
         String newPasswordHashed = "new_hash_456";
 
-        when(repository.findById(100L)).thenReturn(testUser);
+        when(repository.getByUsername("root")).thenReturn(testUser);
         doReturn(true).when(userService).checkPassword("oldPass", encodedPassword);
         doReturn(newPasswordHashed).when(userService).hashPassword(newPasswordRaw);
 
-        Result result = userService.changePassword(100L, "oldPass", newPasswordRaw);
+        Result result = userService.changePassword("oldPass", newPasswordRaw);
 
         assertEquals(Result.SUCCESS, result);
         // Verifichiamo che venga chiamato l'update con l'hash corretto

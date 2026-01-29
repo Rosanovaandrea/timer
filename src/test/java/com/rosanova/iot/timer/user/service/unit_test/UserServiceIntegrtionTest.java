@@ -80,7 +80,7 @@ class UserServiceIntegrtionTest {
         String newPasswordRaw = "newSuperPassword99";
 
         // Cambiamo la password
-        Result result = userService.changePassword(userId, PASSWORD_RAW, newPasswordRaw);
+        Result result = userService.changePassword( PASSWORD_RAW, newPasswordRaw);
 
         assertEquals(Result.SUCCESS, result);
 
@@ -96,9 +96,9 @@ class UserServiceIntegrtionTest {
         User savedUser = userRepository.getByUsername(USERNAME);
         Long userId = (long) savedUser.getId();
 
-        Result result = userService.changePassword(userId, "password_sbagliata", "newPass");
+        Result result = userService.changePassword("password_sbagliata", "newPass");
 
-        assertEquals(Result.ERROR, result);
+        assertEquals(Result.BAD_REQUEST, result);
 
         // Verifichiamo che il login funzioni ancora con la vecchia password (nulla è cambiato)
         LoginReturnDto loginResult = userService.login(USERNAME, PASSWORD_RAW);

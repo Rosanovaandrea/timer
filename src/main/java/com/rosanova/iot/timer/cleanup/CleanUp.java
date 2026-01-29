@@ -6,6 +6,7 @@ import com.rosanova.iot.timer.monitor.repository.MonitorRepository;
 import com.rosanova.iot.timer.timer.repository.TimerRepository;
 import com.rosanova.iot.timer.utils.TimerUtils;
 import com.rosanova.iot.timer.utils.impl.HashMapInt;
+import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,7 +26,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 @Component
 @Profile("!test")
-public class CleanUp {
+public class CleanUp implements SmartInitializingSingleton {
 
     private final ExecutorService threadPool;
 
@@ -61,6 +62,13 @@ public class CleanUp {
         this.ioLock = ioLock;
         this.fileSystemUtils = fileSystemUtils;
 
+    }
+    //metodo di pulizia richiamato all' avvio e che viene avviato solo dopo che tutto i @PostConstruct dei bean singleton sono avviati
+    @Override
+    public void afterSingletonsInstantiated() {
+
+        System.out.println("SISTEMA PRONTO: Controllo integrità e Cleanup in corso...");
+        cleanUpMethod();
     }
 
 
