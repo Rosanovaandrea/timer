@@ -1,0 +1,22 @@
+[Unit]
+Description=Servizio Java Monitor
+# Aspetta che il filesystem sia pronto
+After=basic.target
+
+[Service]
+# Type=simple è perfetto per i JAR che rimangono in esecuzione
+Type=simple
+
+# Sostituisci con il percorso assoluto della tua home e del tuo jar
+ExecStart=/usr/bin/java -jar /home/andrea/timer-0.0.1-SNAPSHOT.jar
+
+# Opzionale: riavvia l'app se crasha
+Restart=always
+RestartSec=10
+
+# Opzionale: imposta la cartella di lavoro (dove l'app cercherà file config ecc.)
+WorkingDirectory=/home/andrea
+
+[Install]
+# Fondamentale per l'autoavvio dell'utente
+WantedBy=default.target

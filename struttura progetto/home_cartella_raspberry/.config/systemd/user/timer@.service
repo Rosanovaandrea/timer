@@ -1,0 +1,8 @@
+[Unit]
+Description=Allarme temporizzato di %i secondi
+After=network.target
+
+[Service]
+# %i cattura il valore tra @ e .service e lo passa a Python
+ExecStart=/usr/bin/python3 /home/andrea/alarm.py %i
+Type=oneshot

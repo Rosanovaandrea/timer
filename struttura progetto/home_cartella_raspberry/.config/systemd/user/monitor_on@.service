@@ -1,0 +1,10 @@
+[Unit]
+Description=Esecuzione script comandata da timer
+
+[Service]
+Type=oneshot
+# Usa /bin/bash davanti per sicurezza se non vuoi gestire i permessi chmod +x
+ExecStart=/bin/bash /home/andrea/display_on.sh
+
+[Install]
+WantedBy=default.target
