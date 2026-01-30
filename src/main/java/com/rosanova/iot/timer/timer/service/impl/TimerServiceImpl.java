@@ -120,7 +120,7 @@ public class TimerServiceImpl implements TimerService {
 
             if (result == Result.ERROR) throw new RuntimeException();
 
-            Thread.sleep(100);
+
 
 
             result = timerUtils.activateSystemdTimer(nameFile);
@@ -179,7 +179,7 @@ public class TimerServiceImpl implements TimerService {
 
         if (result == Result.ERROR) throw new TimerServiceException("timer non disattivato");
 
-        Thread.sleep(100);
+
 
         result = timerUtils.deleteSystemdTimerUnit(filename);
         step++;

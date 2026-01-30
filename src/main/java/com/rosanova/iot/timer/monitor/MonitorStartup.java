@@ -93,7 +93,6 @@ public class MonitorStartup {
 
             step++;
 
-            Thread.sleep(1000);
 
             if (monitorTurnOnUtils.activateSystemdTimer(startString) == Result.ERROR)
                 throw new MonitorServiceException("errore attivazione timer start");

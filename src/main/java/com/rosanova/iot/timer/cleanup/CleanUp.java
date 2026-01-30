@@ -116,7 +116,10 @@ public class CleanUp implements SmartInitializingSingleton {
                 }
             });
 
-            if(!latch.await(10L, TimeUnit.SECONDS)) System.err.println("ERRORE IL CLEANUP NON é STATO COMPLETATO NEL TEMPO LIMITE");
+            //NOTA ho messo un timer a 2 minuti per mitigare il fatto che non ho gestito la rottura con Future, nel caso tieni a mente questo
+            if(!latch.await(2, TimeUnit.MINUTES)){
+                System.err.println("ERRORE IL CLEANUP NON é STATO COMPLETATO NEL TEMPO LIMITE");
+            }
 
         }catch (InterruptedException e){
             System.err.println( "ERRORE DURANTE IL CLEANUP:" + e.getMessage());

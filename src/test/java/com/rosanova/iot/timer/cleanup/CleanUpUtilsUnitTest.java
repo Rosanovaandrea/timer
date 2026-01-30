@@ -146,7 +146,7 @@ class CleanUpUtilsUnitTest {
 
         // SIMULAZIONE INTERRUZIONE:
         // Quando il thread principale arriva a latch.await(), lanciamo InterruptedException
-        when(mockLatch.await(10L, TimeUnit.SECONDS))
+        when(mockLatch.await(2L, TimeUnit.MINUTES))
                 .thenThrow(new InterruptedException("Thread forcibly interrupted"));
 
         // --- 2. ACT ---
