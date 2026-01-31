@@ -20,6 +20,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -129,6 +130,44 @@ class CleanUpUtilsUnitTest {
         // 5. CRUCIALE: Il lock NON deve essere rilasciato perché non è mai stato acquisito!
         // Se lo chiamassi, il test (e il codice reale) fallirebbe.
         verify(ioLock, never()).unlock();
+    }
+
+    @Test
+    void cleanUpMethod_InterruptedDuringAwait_stopThreadsOnTimeout() throws InterruptedException {
+        // --- 1. ARRANGE ---
+
+        Future<?> block = Mockito.mock(Future.class);
+        // Il lock ha successo
+        when(ioLock.tryLock(10L, TimeUnit.SECONDS)).thenReturn(true);
+
+        // Mock DB ok
+        doReturn(new Monitor(0, 10, 20)).when(monitorRepository).getMonitor();
+
+
+        doReturn(block).when(executor).submit(Mockito.any(Runnable.class));
+
+
+        // Mock Latch: iniettiamo il mock tramite lo spy
+        doReturn(mockLatch).when(cleanUp).getLatch(3);
+
+        // SIMULAZIONE INTERRUZIONE:
+        // Quando il thread principale arriva a latch.await(), lanciamo InterruptedException
+        when(mockLatch.await(2L, TimeUnit.MINUTES)).thenReturn(false);
+
+        // --- 2. ACT ---
+        cleanUp.cleanUpMethod();
+
+        // 2. Verifica che il flusso sia passato per i submit prima dell'interruzione
+        verify(executor, times(3)).submit(any(Runnable.class));
+
+        //chiama future block per fermare i Threads
+        verify(block, Mockito.times(3)).cancel(true);
+
+        // 3. Il reload deve essere chiamato comunque
+        verify(fileSystemUtils, times(1)).timerReload();
+
+        // 4. Il lock DEVE essere rilasciato anche se il thread è stato interrotto
+        verify(ioLock, times(1)).unlock();
     }
 
     @Test
@@ -368,6 +407,31 @@ class CleanUpUtilsUnitTest {
     }
 
     @Test
+    void testCleanupTmpDirDeleteThreadInterrupt() throws IOException {
+
+        doReturn(true).when(cleanUp).isInterrupted();
+
+        String extension = ".timer";
+        Path tmp = directory.resolve("tmp");
+        Path file1 = tmp.resolve("1000000.timer");
+        Path file2 = tmp.resolve("2000000.timer");
+        Files.createDirectory(tmp);
+        Files.createFile(file1);
+        Files.createFile(file2);
+
+
+        Assertions.assertTrue(Files.exists(file1));
+        Assertions.assertTrue(Files.exists(file2));
+
+        cleanUp.deleteFiledFromTmpDirectory(tmp,extension);
+
+        Assertions.assertTrue(Files.exists(file1));
+        Assertions.assertTrue(Files.exists(file2));
+    }
+
+
+
+    @Test
     void testCleanupTmpDirDeleteValidFormat() throws IOException {
 
         String extension = ".timer";
@@ -432,6 +496,31 @@ class CleanUpUtilsUnitTest {
         fileToControl.add(2);
 
         cleanUp.deleteFiledFromTimerDirectory(tmp,fileToControl,extension);
+    }
+
+    @Test
+    void deleteTimerDirThreadInterrupted() throws IOException {
+        String extension = ".timer";
+        Path tmp = directory.resolve("tmp");
+        Files.createDirectory(tmp);
+        Path file1 = tmp.resolve("3000000.timer");
+        Path file2 = tmp.resolve("40000002.timer");
+
+        doReturn(true).when(cleanUp).isInterrupted();
+
+        Files.createFile(file1);
+        Files.createFile(file2);
+
+        Assertions.assertTrue(Files.exists(file1));
+        Assertions.assertTrue(Files.exists(file2));
+
+        HashMapInt fileToControl = new HashMapInt();
+
+
+        cleanUp.deleteFiledFromTimerDirectory(tmp,fileToControl,extension);
+
+        Assertions.assertTrue(Files.exists(file1));
+        Assertions.assertTrue(Files.exists(file2));
     }
 
     @Test

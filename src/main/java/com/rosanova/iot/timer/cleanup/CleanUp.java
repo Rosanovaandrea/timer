@@ -21,6 +21,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -94,21 +95,21 @@ public class CleanUp implements SmartInitializingSingleton {
 
             CountDownLatch latch = getLatch(3);
 
-            threadPool.submit(() -> {
+           Future<?> block_1= threadPool.submit(() -> {
                 try {
                     deleteFiledFromTimerDirectory(timerDir, timerToRemain, EXTENSION);
                 } finally {
                     latch.countDown();
                 }
             });
-            threadPool.submit(() -> {
+            Future<?> block_2=threadPool.submit(() -> {
                 try {
                     deleteFiledFromTimerDirectory(monitorDir, timerMonitoRoRemain, EXTENSION);
                 } finally {
                     latch.countDown();
                 }
             });
-            threadPool.submit(() -> {
+            Future<?> block_3=threadPool.submit(() -> {
                 try {
                     deleteFiledFromTmpDirectory(tmpDir, EXTENSION);
                 } finally {
@@ -116,9 +117,12 @@ public class CleanUp implements SmartInitializingSingleton {
                 }
             });
 
-            //NOTA ho messo un timer a 2 minuti per mitigare il fatto che non ho gestito la rottura con Future, nel caso tieni a mente questo
+
             if(!latch.await(2, TimeUnit.MINUTES)){
                 System.err.println("ERRORE IL CLEANUP NON é STATO COMPLETATO NEL TEMPO LIMITE");
+                block_1.cancel(true);
+                block_2.cancel(true);
+                block_3.cancel(true);
             }
 
         }catch (InterruptedException e){
@@ -157,6 +161,8 @@ public class CleanUp implements SmartInitializingSingleton {
 
             for (Path entry : stream) {
 
+                if(isInterrupted()) break;
+
                 if (Files.isDirectory(entry)){
                     System.err.println("STATO INCONSISTENTE DUANTE LA CANCELLAZIONE; LA CARTELLA NON DOVREBBE CONTENERE SOTTOCARTELLE; DOVREI CONTROLLARE");
                     continue;
@@ -193,6 +199,10 @@ public class CleanUp implements SmartInitializingSingleton {
         }
     }
 
+    public boolean isInterrupted (){
+       return Thread.currentThread().isInterrupted();
+    }
+
     public void deleteFiledFromTmpDirectory(Path dir,String extension) {
 
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir)) {
@@ -200,6 +210,8 @@ public class CleanUp implements SmartInitializingSingleton {
             String filename;
 
             for (Path entry : stream) {
+
+                if(isInterrupted()) break;
 
                 if (Files.isDirectory(entry)){
                     System.err.println("STATO INCONSISTENTE DUANTE LA CANCELLAZIONE; LA CARTELLA NON DOVREBBE CONTENERE SOTTOCARTELLE; DOVREI CONTROLLARE");
