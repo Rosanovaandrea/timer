@@ -46,6 +46,7 @@ public class MonitorServiceUpdateStartIntegrationTest {
     @BeforeAll
     static void initDatabase(@Autowired MonitorRepository repository) {
         // Inseriamo il monitor solo se il database è vuoto
+        repository.deleteAll();
         if (repository.getMonitor() == null) {
             Monitor initialMonitor = new Monitor(1L, 5000, 15000);
             repository.save(initialMonitor);
@@ -63,7 +64,7 @@ public class MonitorServiceUpdateStartIntegrationTest {
         MonitorTimerShutdownUtilImpl realUtil = new MonitorTimerShutdownUtilImpl(
                 tmpDirectory.toString(),
                 monitorDirectory.toString(),
-                "monitor-on.service"
+                "monitor-on"
         );
 
         monitorTurnOnUtilsSpy = Mockito.spy(realUtil);
@@ -88,7 +89,7 @@ public class MonitorServiceUpdateStartIntegrationTest {
 
     @Test
     @Order(2)
-    void testUpdateMonitorStart_Success() throws IOException {
+    void testUpdateMonitorStart_Success() throws IOException, InterruptedException {
         int newStart = 7000;
 
         // Esecuzione
@@ -111,7 +112,7 @@ public class MonitorServiceUpdateStartIntegrationTest {
     }
 
     @Test
-    @Order(1)
+   @Order(1)
     void testUpdateMonitorStart_LockFailure() throws InterruptedException {
         // Forza il fallimento del lock
         when(lockMock.tryLock(anyLong(), eq(TimeUnit.MILLISECONDS))).thenReturn(false);

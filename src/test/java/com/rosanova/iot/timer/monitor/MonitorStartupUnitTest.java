@@ -49,7 +49,7 @@ class MonitorStartupUnitTest {
 
         ArgumentCaptor<Monitor> captor = ArgumentCaptor.forClass(Monitor.class);
 
-        Mockito.doReturn(null).when(repository).getMonitor();
+        Mockito.doReturn(false).when(repository).existsMonitor();
         Mockito.doReturn(Result.SUCCESS).when(monitorTurnOnUtils).createSystemdTimerUnit(Mockito.anyString(),Mockito.anyString(),Mockito.anyString());
         Mockito.doReturn(Result.SUCCESS).when(monitorTurnOffUtils).createSystemdTimerUnit(Mockito.anyString(),Mockito.anyString(),Mockito.anyString());
         Mockito.doReturn(Result.SUCCESS).when(monitorTurnOnUtils).timerReload();
@@ -82,7 +82,7 @@ class MonitorStartupUnitTest {
     @Test
     void createMonitorAlreadyExists() {
 
-        Mockito.doReturn(new Monitor()).when(repository).getMonitor();
+        Mockito.doReturn(true).when(repository).existsMonitor();
 
         Assertions.assertEquals(Result.SUCCESS,monitorStartup.createMonitor());
 
@@ -107,7 +107,7 @@ class MonitorStartupUnitTest {
         String literalStart = "08:00:00";
         String literalStop = "20:00:00";
 
-        Mockito.doReturn(null).when(repository).getMonitor();
+        Mockito.doReturn(false).when(repository).existsMonitor();
         Mockito.doReturn(Result.ERROR).when(monitorTurnOnUtils).createSystemdTimerUnit(Mockito.anyString(),Mockito.anyString(),Mockito.any());
 
         Assertions.assertThrows(MonitorServiceException.class,()->{monitorStartup.createMonitor();});
@@ -133,7 +133,7 @@ class MonitorStartupUnitTest {
         String literalStart = "08:00:00";
         String literalStop = "20:00:00";
 
-        Mockito.doReturn(null).when(repository).getMonitor();
+        Mockito.doReturn(false).when(repository).existsMonitor();
         Mockito.doReturn(Result.SUCCESS).when(monitorTurnOnUtils).createSystemdTimerUnit(Mockito.anyString(),Mockito.anyString(),Mockito.anyString());
         Mockito.doReturn(Result.ERROR).when(monitorTurnOffUtils).createSystemdTimerUnit(Mockito.anyString(),Mockito.anyString(),Mockito.anyString());
 
@@ -161,7 +161,7 @@ class MonitorStartupUnitTest {
         String literalStart = "08:00:00";
         String literalStop = "20:00:00";
 
-        Mockito.doReturn(null).when(repository).getMonitor();
+        Mockito.doReturn(false).when(repository).existsMonitor();
         Mockito.doReturn(Result.SUCCESS).when(monitorTurnOnUtils).createSystemdTimerUnit(Mockito.anyString(),Mockito.anyString(),Mockito.any());
         Mockito.doReturn(Result.SUCCESS).when(monitorTurnOffUtils).createSystemdTimerUnit(Mockito.anyString(),Mockito.anyString(),Mockito.any());
         Mockito.doReturn(Result.ERROR).when(monitorTurnOnUtils).timerReload();
@@ -189,7 +189,7 @@ class MonitorStartupUnitTest {
         String literalStart = "08:00:00";
         String literalStop = "20:00:00";
 
-        Mockito.doReturn(null).when(repository).getMonitor();
+        Mockito.doReturn(false).when(repository).existsMonitor();
         Mockito.doReturn(Result.SUCCESS).when(monitorTurnOnUtils).createSystemdTimerUnit(Mockito.anyString(),Mockito.anyString(),Mockito.any());
         Mockito.doReturn(Result.SUCCESS).when(monitorTurnOffUtils).createSystemdTimerUnit(Mockito.anyString(),Mockito.anyString(),Mockito.any());
         Mockito.doReturn(Result.SUCCESS).when(monitorTurnOnUtils).timerReload();
@@ -219,7 +219,7 @@ class MonitorStartupUnitTest {
         String literalStart = "08:00:00";
         String literalStop = "20:00:00";
 
-        Mockito.doReturn(null).when(repository).getMonitor();
+        Mockito.doReturn(false).when(repository).existsMonitor();
         Mockito.doReturn(Result.SUCCESS).when(monitorTurnOnUtils).createSystemdTimerUnit(Mockito.anyString(),Mockito.anyString(),Mockito.anyString());
         Mockito.doReturn(Result.SUCCESS).when(monitorTurnOffUtils).createSystemdTimerUnit(Mockito.anyString(),Mockito.anyString(),Mockito.anyString());
         Mockito.doReturn(Result.SUCCESS).when(monitorTurnOnUtils).timerReload();
@@ -250,7 +250,7 @@ class MonitorStartupUnitTest {
         String literalStart = "08:00:00";
         String literalStop = "20:00:00";
 
-        Mockito.doReturn(null).when(repository).getMonitor();
+        Mockito.doReturn(false).when(repository).existsMonitor();
         Mockito.doReturn(Result.SUCCESS).when(monitorTurnOnUtils).createSystemdTimerUnit(Mockito.anyString(),Mockito.anyString(),Mockito.any());
         Mockito.doReturn(Result.SUCCESS).when(monitorTurnOffUtils).createSystemdTimerUnit(Mockito.anyString(),Mockito.anyString(),Mockito.any());
         Mockito.doReturn(Result.SUCCESS).when(monitorTurnOnUtils).timerReload();
@@ -282,7 +282,7 @@ class MonitorStartupUnitTest {
         String literalStart = "08:00:00";
         String literalStop = "20:00:00";
 
-        Mockito.doReturn(null).when(repository).getMonitor();
+        Mockito.doReturn(false).when(repository).existsMonitor();
         Mockito.doReturn(Result.SUCCESS).when(monitorTurnOnUtils).createSystemdTimerUnit(Mockito.anyString(),Mockito.anyString(),Mockito.anyString());
         Mockito.doReturn(Result.SUCCESS).when(monitorTurnOffUtils).createSystemdTimerUnit(Mockito.anyString(),Mockito.anyString(),Mockito.anyString());
         Mockito.doReturn(Result.SUCCESS).when(monitorTurnOnUtils).timerReload();
@@ -315,7 +315,7 @@ class MonitorStartupUnitTest {
         String literalStart = "08:00:00";
         String literalStop = "20:00:00";
 
-        Mockito.doReturn(null).when(repository).getMonitor();
+        Mockito.doReturn(false).when(repository).existsMonitor();
         Mockito.doReturn(Result.SUCCESS).when(monitorTurnOnUtils).createSystemdTimerUnit(Mockito.anyString(),Mockito.anyString(),Mockito.anyString());
         Mockito.doReturn(Result.SUCCESS).when(monitorTurnOffUtils).createSystemdTimerUnit(Mockito.anyString(),Mockito.anyString(),Mockito.anyString());
         Mockito.doReturn(Result.SUCCESS).when(monitorTurnOnUtils).timerReload();
@@ -342,7 +342,7 @@ class MonitorStartupUnitTest {
 
     @Test
     void createMonitorErrorOnFirstDatabaseAccess() {
-        Mockito.doThrow(new RuntimeException("DB Connection Error")).when(repository).getMonitor();
+        Mockito.doThrow(new RuntimeException("DB Connection Error")).when(repository).existsMonitor();
 
         Assertions.assertThrows(RuntimeException.class, () -> monitorStartup.createMonitor());
 

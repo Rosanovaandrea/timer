@@ -12,4 +12,5 @@ public interface MonitorRepository {
     boolean existsMonitor();
     boolean isStartBeforeStop(long id);
     boolean isStopAfterStart(long id);
+    void deleteAll();
 }

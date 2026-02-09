@@ -5,14 +5,10 @@ import com.rosanova.iot.timer.error.Result;
 import com.rosanova.iot.timer.monitor.Monitor;
 import com.rosanova.iot.timer.monitor.repository.MonitorRepository;
 import com.rosanova.iot.timer.utils.TimerUtils;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -36,7 +32,7 @@ public class MonitorServiceImpl {
         boolean resultLock = false;
         try {
             resultLock = sharedLock.tryLock(100L, TimeUnit.MILLISECONDS);
-            if(!resultLock) return Result.ERROR;
+            if(!resultLock)  return Result.ERROR;
             updateMonitorStart(start);
             return Result.SUCCESS;
         }catch (Exception e){

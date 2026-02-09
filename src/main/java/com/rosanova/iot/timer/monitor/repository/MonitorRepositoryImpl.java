@@ -77,4 +77,10 @@ public class MonitorRepositoryImpl implements MonitorRepository {
         String sql = "SELECT (stop > start) FROM monitor_timer WHERE id = ?";
         return jdbcTemplate.queryForObject(sql, Boolean.class, id);
     }
+
+    // Metodo per vedere se uno stop è dopo uno start (Logica DB)
+    public void deleteAll() {
+        String sql = "DELETE FROM monitor_timer";
+         jdbcTemplate.update(sql);
+    }
 }
