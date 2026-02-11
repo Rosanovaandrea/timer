@@ -220,7 +220,7 @@ public class TimerServiceImpl implements TimerService {
     }
 
     @Override
-    public List<Timer> getAllTimers(int start) {
+    public List<Timer> getAllTimers() {
         return repository.findAll();
     }
 }

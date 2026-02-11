@@ -14,11 +14,11 @@ import java.time.LocalDateTime;
 public class Timer {
 
 
-    private long id;
+    long id;
 
-    private String timerName;
+    String timerName;
 
-    private int startTime;
+    int startTime;
 
-    private int endTime;
+    int endTime;
 }

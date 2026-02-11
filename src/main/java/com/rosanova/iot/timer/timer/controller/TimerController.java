@@ -43,9 +43,9 @@ public class TimerController {
     }
 
     @GetMapping
-    public ResponseEntity<?> getAllTimers(@RequestParam(defaultValue = "0") int start) {
+    public ResponseEntity<?> getAllTimers() {
         try {
-            List<Timer> timers = timerService.getAllTimers(start);
+            List<Timer> timers = timerService.getAllTimers();
             return ResponseEntity.ok(timers);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
