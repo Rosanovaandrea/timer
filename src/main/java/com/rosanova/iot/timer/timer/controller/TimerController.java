@@ -6,6 +6,7 @@ import com.rosanova.iot.timer.timer.dto.TimerInsertDto;
 import com.rosanova.iot.timer.timer.service.TimerService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.aot.hint.annotation.RegisterReflectionForBinding;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,6 +17,7 @@ import java.util.List;
 @RequestMapping("/authenticated/api/v1/timers")
 @RequiredArgsConstructor
 @CrossOrigin("*")
+@RegisterReflectionForBinding(Timer.class)
 public class TimerController {
 
     private final TimerService timerService;
