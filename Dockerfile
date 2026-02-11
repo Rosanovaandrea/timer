@@ -3,7 +3,7 @@ FROM ghcr.io/graalvm/native-image-community:21 AS build
 WORKDIR /app
 COPY . .
 # Genera il binario (Maven caricherà le dipendenze)
-RUN ./mvnw native:compile -DskipTests
+RUN ./mvnw -X native:compile -DskipTests
 
 # Stage finale: estraiamo solo il binario
 FROM scratch
