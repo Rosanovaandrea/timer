@@ -1,0 +1,28 @@
+name: GraalVM Native Build for Raspberry Pi
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up QEMU (per ARM64)
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Native Image via Docker
+        run: |
+          docker buildx build \
+            --platform linux/arm64 \
+            --tag timer-iot-arm64 \
+            --file Dockerfile \
+            --output type=local,dest=./output .
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: timer-raspberry-bin
+          path: ./output/timer
