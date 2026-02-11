@@ -93,6 +93,27 @@
 	<build>
 		<plugins>
 			<plugin>
+				<groupId>org.graalvm.buildtools</groupId>
+				<artifactId>native-maven-plugin</artifactId>
+				<version>0.10.4</version>
+				<extensions>true</extensions>
+				<executions>
+					<execution>
+						<id>build-native</id>
+						<goals>
+							<goal>compile</goal>
+						</goals>
+						<phase>package</phase>
+					</execution>
+				</executions>
+				<configuration>
+					<imageName>timer</imageName>
+					<mainClass>com.rosanova.iot.timer.TimerApplication</mainClass> <buildArgs>
+					<arg>--no-fallback</arg>
+				</buildArgs>
+				</configuration>
+			</plugin>
+			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<configuration>
