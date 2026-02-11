@@ -1,6 +1,6 @@
 
 # Usa l'immagine GraalVM ufficiale come base
-FROM ghcr.io/graalvm/native-image-community:25 AS build
+FROM ghcr.io/graalvm/native-image-community:17 AS build
 WORKDIR /app
 COPY . .
 
