@@ -7,7 +7,7 @@ COPY . .
 RUN microdnf install -y gcc glibc-devel zlib-devel libstdc++-devel || true
 RUN microdnf install -y sqlite-devel || true
 # Genera il binario (Maven caricherà le dipendenze)
-RUN ./mvnw native:compile -DskipTests -Dnative_image -e -X
+RUN ./mvnw native:compile -Pnative -DskipTests -e -X
 
 # Stage finale: estraiamo solo il binario
 FROM scratch
