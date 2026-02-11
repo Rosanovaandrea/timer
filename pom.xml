@@ -110,6 +110,8 @@
 					<imageName>timer</imageName>
 					<mainClass>com.rosanova.iot.timer.TimerApplication</mainClass> <buildArgs>
 					<arg>--no-fallback</arg>
+					<arg>--target=linux-aarch64</arg>
+					<arg>-march=armv8-a</arg>
 				</buildArgs>
 				</configuration>
 			</plugin>
