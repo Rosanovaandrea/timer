@@ -56,6 +56,8 @@ public class Startup {
 
         if(password.length() < 8) return Result.ERROR;
 
+        repository.deleteAllUsers();
+
         User root = new User();
         root.setUsername(USERNAME);
         root.setPassword(hashPassword(password));
